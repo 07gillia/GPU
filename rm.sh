@@ -1,0 +1,2 @@
+cd res
+rm *.vtk
