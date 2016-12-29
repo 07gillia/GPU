@@ -2,6 +2,7 @@
 !/**/
 !*.*
 *.vtk
+*.optrpt
 
 # Folder view configuration files
 .DS_Store
