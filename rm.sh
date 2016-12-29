@@ -1,2 +1,0 @@
-cd res
-rm *.vtk
