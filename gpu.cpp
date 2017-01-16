@@ -1,16 +1,10 @@
 /*
-
-
 =======================================================================
 This example follows the book from Griebel et al on Computational Fluid
 Dynamics. It realises a test setup from TUM's CFD lab.
 
 (C) 2016 Tobias Weinzierl
 =======================================================================
-
-
-
-
 
 Getting started with the Karman vortex strees
 
