@@ -1,0 +1,109 @@
+%\title{Project Report}
+%
+%%% Preamble
+\documentclass[paper=a4, fontsize=11pt]{scrartcl}
+\usepackage[T1]{fontenc}
+\usepackage{fourier}
+
+\usepackage[english]{babel}															% English language/hyphenation
+\usepackage[protrusion=true,expansion=true]{microtype}	
+\usepackage{amsmath,amsfonts,amsthm} % Math packages
+\usepackage[pdftex]{graphicx}	
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage[margin=0.75in]{geometry}
+
+%%% Custom sectioning
+\usepackage{sectsty}
+\allsectionsfont{\centering \normalfont\scshape}
+
+
+%%% Custom headers/footers (fancyhdr package)
+\usepackage{fancyhdr}
+\pagestyle{fancyplain}
+\fancyhead{}											% No page header
+\fancyfoot[L]{}											% Empty 
+\fancyfoot[C]{}											% Empty
+\fancyfoot[R]{\thepage}									% Pagenumbering
+\renewcommand{\headrulewidth}{0pt}			% Remove header underlines
+\renewcommand{\footrulewidth}{0pt}				% Remove footer underlines
+\setlength{\headheight}{3.6pt}
+\date{}
+
+
+%%% Equation and float numbering
+\numberwithin{equation}{section}		% Equationnumbering: section.eq#
+\numberwithin{figure}{section}			% Figurenumbering: section.fig#
+\numberwithin{table}{section}				% Tablenumbering: section.tab#
+
+
+%%% Maketitle metadata
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}} 	% Horizontal rule
+
+\title{
+		\vspace{-0.5in} 	
+		\usefont{OT1}{bch}{b}{n}
+		\normalfont \normalsize \textsc{Durham Computer Science} \\ [5pt]
+		\horrule{0.5pt} \\[0.4cm]
+		\huge Computer Vision Assignment - LLLL76\\
+		\horrule{2pt} \\[0.5cm]
+		\vspace{-1in} 	
+}
+
+%%% Begin document
+\begin{document}
+\maketitle
+\begin{wrapfigure}{r}{0.33\textwidth} %this figure will be at the right
+    \centering
+    \caption{Figure One}
+    \includegraphics[width=0.33\textwidth]{res.png}
+\end{wrapfigure}
+\section{My Design}
+\subsection{Pre-Processing}
+
+After reading in the image the top 70\% is removed I then used a bilateral filter as my pre-processing for the canny input. The top 70\% was shown to be useless in testing as no lines extended above this threshold.
+
+\subsection{Canny}
+
+Canny takes a lower and upper bound, this I calculated based on the median of the image. I also have a back-up version of this "auto-canny" which changed the constants used in the calculation of the upper and lower bound this is used if the results of the canny are not within a predetermined range.
+
+\subsection{Post-Processing}
+
+My post-canny processing is dynamic. The number of non-zero pixels are counted and this will influence which of the post-canny methods that are used. If the number of pixels is bellow a specific bound then there is a lack of detail for the read edges, thus dilation is used to try to increase the number of pixels that are present on the road edges. If the number of pixels is above a specific bound then there is a significant amount of noise that needs to be removed, thus closing, erosion and morphological gradient are used to remove some of the noise.
+
+\subsection{RANSAC}
+
+Get the coordinates of all non-zero values in the input image. Choose two at random, if they are not the same find the euclidean distance and the gradient between them, these are useful metrics, if the gradients are too flat then the line will be disregarded and if the line is too short then it will be disregarded. Create an image that consists of the line created if the two points are linked, with set width, this image is bitwise anded with the canny output so as to give the number of data points that are the same in both images, the number of pixels that are left is then compared to a bound so as to decide the suitability of the line. The bound is created by the number of pixels that should exist between the two points and a bit of maths. If the line passes all trials then it is stored, if too many are found then only a subset is plotted but typically all are plotted.
+
+\section{Choices Made}
+\subsection{What I tried}
+
+I tried a lot of things before finding the current set up. For pre-processing, adaptive thresholding, fast N means de noising and histogram normalization.  For post processing I also implemented opening as well as the 4 used in the final set up. My canny has gone through a few different sets of constants. I also implemented HSV transforms and splitting, this was ineffective and provided no benefit to the line detection.
+
+\subsection{Testing}
+
+I started by testing by running hough lines after doing the same pre-processing as the standard routine. This output is then compared to gold standard data that I have made, this data is made by drawing perfect lines on input images and then comparing these lines to the lines created by hough lines. The same is done using the lines produced by the standard routine and RANSAC. The number of pixels in the perfect data is known and this is used in conjunction to the number of pixels in each of the routines that matches the perfect results and gives a percentage, indicating how good each of the routines is in comparison.
+
+\subsection{Results}
+
+On average, Hough lines is more accurate to the gold standard data than my implementation of RANSAC. There are a few occasions where RANSAC gives a higher accuracy but this is sporadic, with RANSAC occasionally not finding any lines at all and thus having an accuracy of zero.
+
+\begin{tabular}{ |p{5cm}||p{5cm}|p{5cm}|  }
+ \hline
+ \multicolumn{3}{|c|}{Line Score} \\
+ \hline
+ Image Number & Hough Lines Percentage & RANSAC Percentage\\
+ \hline
+ vlcsnap-00001.png   & 23.3\% & 7.8\% \\
+ vlcsnap-00002.png   & 16.6\% & 6.4\% \\
+ vlcsnap-00003.png   & 15.4\% & 8.0\% \\
+ vlcsnap-00004.png   & 18.7\% & 7.0\% \\
+ \hline
+ Average & 10.2\% & 5.9\% \\
+ \hline
+\end{tabular}
+
+%%% End document
+\end{document}

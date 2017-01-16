@@ -85,7 +85,6 @@ on YouTube, e.g.
 #include <fstream>
 #include <cmath>
 
-
 /**
  * Number of cell we have per axis
  */
@@ -106,6 +105,13 @@ double* uz;
 double* Fx;
 double* Fy;
 double* Fz;
+
+/**
+ * Helper along x,y and z direction for blocks
+ */
+double* BKx;
+double* BKy;
+double* BKz;
 
 /**
  * Pressure in the cell
@@ -651,7 +657,7 @@ int computeP() {
     for (int iz=1; iz<numberOfCellsPerAxisZ+1; iz++) {
       for (int iy=1; iy<numberOfCellsPerAxisY+1; iy++) {
         for (int ix=1; ix<numberOfCellsPerAxisX+1; ix++) {
-          if ( cellIsInside[getCellIndex(ix,iy,iz)] ) {
+          if ( cellIsInside[getCellIndex(ix,iy,iz)] ) { // THIS IS THE STEP 2 BIT
             double residual = rhs[ getCellIndex(ix,iy,iz) ] +
               1.0/getH()/getH()*
               (
@@ -727,7 +733,9 @@ void setNewVelocities() {
  * part three of the assessment.
  */
 void setupScenario() {
+  const int BLOCKNUMBER = 4;
   const int numberOfCells = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
+  const int numberOfBlocks = (numberOfCellsPerAxisX+2/BLOCKNUMBER) * (numberOfCellsPerAxisY+2/BLOCKNUMBER) * (numberOfCellsPerAxisZ+2/BLOCKNUMBER);
 
   const int numberOfFacesX = (numberOfCellsPerAxisX+3) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
   const int numberOfFacesY = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+3) * (numberOfCellsPerAxisZ+2);
@@ -739,6 +747,11 @@ void setupScenario() {
   Fx  = 0;
   Fy  = 0;
   Fz  = 0;
+
+  BKx = 0;
+  BKy = 0;
+  BKz = 0;
+
   p   = 0;
   rhs = 0;
   ink = 0;
@@ -749,6 +762,10 @@ void setupScenario() {
   Fx  = new (std::nothrow) double[numberOfFacesX];
   Fy  = new (std::nothrow) double[numberOfFacesY];
   Fz  = new (std::nothrow) double[numberOfFacesZ];
+
+  BKx = new (std::nothrow) double[numberOfCellsPerAxisX/BLOCKNUMBER];
+  BKy = new (std::nothrow) double[numberOfCellsPerAxisY/BLOCKNUMBER];
+  BKz = new (std::nothrow) double[numberOfCellsPerAxisZ/BLOCKNUMBER];
 
   p   = new (std::nothrow) double[numberOfCells];
   rhs = new (std::nothrow) double[numberOfCells];
@@ -764,6 +781,9 @@ void setupScenario() {
     Fx  == 0 ||
     Fy  == 0 ||
     Fz  == 0 ||
+    BKx  == 0 ||
+    BKy  == 0 ||
+    BKz  == 0 ||
     p   == 0 ||
     rhs == 0
   ) {
@@ -1101,7 +1121,6 @@ void setVelocityBoundaryConditions(double time) {
 
   validateThatEntriesAreBounded("setVelocityBoundaryConditions(double)[out]");
 }
-
 
 
 
