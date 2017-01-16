@@ -112,6 +112,7 @@ double* Fz;
 double* BKx;
 double* BKy;
 double* BKz;
+double* BK;
 
 /**
  * Pressure in the cell
@@ -190,6 +191,19 @@ int getVertexIndex(int ix, int iy, int iz) {
   return ix+iy*(numberOfCellsPerAxisX+1)+iz*(numberOfCellsPerAxisX+1)*(numberOfCellsPerAxisY+1);
 }
 
+/**
+ * Maps the three coordinates onto the corresponding block.
+ * ADDED BY ME
+ */
+int getBlockIndex(int ix, int iy, int iz, BLOCKNUMBER) {
+  assertion(ix>=0,__LINE__);
+  assertion(ix<(numberOfCellsPerAxisX+2)/BLOCKNUMBER,__LINE__);
+  assertion(iy>=0,__LINE__);
+  assertion(iy<(numberOfCellsPerAxisY+2)/BLOCKNUMBER,__LINE__);
+  assertion(iz>=0,__LINE__);
+  assertion(iz<(numberOfCellsPerAxisZ+2)/BLOCKNUMBER,__LINE__);
+  return ix+iy*(numberOfCellsPerAxisX+2/BLOCKNUMBER)+iz*(numberOfCellsPerAxisX+2/BLOCKNUMBER)*(numberOfCellsPerAxisY+2/BLOCKNUMBER);
+}
 
 /**
  * Gives you the face with the number ix,iy,iz.
@@ -766,6 +780,7 @@ void setupScenario() {
   BKx = new (std::nothrow) double[numberOfCellsPerAxisX/BLOCKNUMBER];
   BKy = new (std::nothrow) double[numberOfCellsPerAxisY/BLOCKNUMBER];
   BKz = new (std::nothrow) double[numberOfCellsPerAxisZ/BLOCKNUMBER];
+  BK = new (std::nothrow) double[numberOfBlocks];
 
   p   = new (std::nothrow) double[numberOfCells];
   rhs = new (std::nothrow) double[numberOfCells];
@@ -832,6 +847,19 @@ void setupScenario() {
     }
     cellIsInside[ getCellIndex(xOffsetOfObstacle+sizeOfObstacle+0,  2*sizeOfObstacle+2,iz) ] = false;
     cellIsInside[ getCellIndex(xOffsetOfObstacle+sizeOfObstacle+1,  2*sizeOfObstacle+2,iz) ] = false;
+  }
+
+  // iterate through every BLOCK if in the block, all indexes are fluid then it can be fully SIMD
+  // if half and half then cannot be SIMD 
+  // if fully non-fluid then it can skipped entirely
+  // if it can be fully SIMD then = 0 if half and half = 1 if all empty = 2
+  // bool is faster to check
+  // for each block get the index of a set cell
+  // get the other ones and test them
+  // add the block index to two individual lists half and half or SIMD
+
+  for (int block = 0; block < len(BK); ++block){
+    
   }
 
   validateThatEntriesAreBounded("setupScenario()");
