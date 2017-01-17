@@ -1,0 +1,77 @@
+/*
+=======================================================================
+This example follows the book from Griebel et al on Computational Fluid
+Dynamics. It realises a test setup from TUM's CFD lab.
+
+(C) 2016 Tobias Weinzierl
+=======================================================================
+
+Getting started with the Karman vortex strees
+
+(1) Compile the code with
+
+g++ -O3 karman.cpp -o karman
+
+(2) Try a dry run
+
+./karman
+
+You should see a usage instruction. Lets start with
+
+(3)
+
+./karman 10 0.001 800
+
+It will run for a while (up to several hours - depends on your computer). Please note that you can work with
+finer meshes (increase first parameter) for all your development but then you miss some of the interesting physics.
+For reasonably accurate results, you should use 20 instead of 10. It then however can happen that your code runs
+for more than a day. So at least decrease the final time (see constant below) for any speed tests.
+
+Once you've completed this example, you might want to try:
+
+./karman 10 0.001 1600
+./karman 10 0.001 10000
+./karman 15 0.001 1600
+./karman 15 0.001 10000
+./karman 20 0.001 1600
+./karman 20 0.001 10000
+
+The last parameter is the Reynolds number. It determines how viscous your fluid is. Very high Reynolds numbers
+make the fluid resemble gas, low Reynolds numbers make it act like honey.
+
+
+(4) Open Paraview
+
+- Select all the vtk files written and press Apply. You should see the bounding box of the setup, i.e. a cube.
+- Select first the vtk files in the left menu and then Filters/Alphabetical/Stream Tracer and press Apply.
+- Press the Play button. Already in the first time snapshot you should see how the fluid flows through the
+  domain (the lines you see are streamlines, i.e. they visualise the flow direction)
+- If you want to see the obstacle: select the output files in the left window. Select Filter/Threshold. In the
+  bottom left window there's a pulldown menu Scalars where you have to select obstacle. Filter values between
+  0 and 0.1 and press apply. The idea is that each cell has a number: 0 means obstacle, 1 fluid cell. So if you
+  filter out all the 1 guys, then you end up with the obstacle.
+- If you want to get an impression of the pressure distribution, select the output files in the left window.
+  Apply the filter Slice. By default, its x normal vector is set to 1. For our setup, it is better to make the
+  z component equal one. Press apply and ensure that you have selected pressure for the output. When you run the
+  code it might become necessary to press the button "Rescale to Data Range" in the toolbar for the pressure as
+  the pressure increases over time.
+- Also very convenient to study the flow field is the glyph mode. Select the input data to the left and apply the
+  filter Glyph. It puts little arrows into the domain that visualise the flow direction and its magnitude. By
+  default, these glyphs are too big. Use the Properties window to the left and reduce the Scale Factor to 0.02,
+  e.g.
+- For Scientific Computing: If you have implemented another equation on top of the flow field (should be called
+  ink here here) to get an idea what the solution looks like. Alternatively, you can use threshold or the contour
+  line filter.
+
+Paraview is pretty powerful (though sometimes not very comfortable to use). However, you find plenty of tutorials
+on YouTube, e.g.
+
+
+
+(5) Start programming
+
+- There is already a field ink in the code that you can use to represent your chemical substance.
+- It has the dimension numberOfCellsPerAxis+1 x numberOfCellsPerAxis+1 x numberOfCellsPerAxis+1.
+- The ink is already visualised (though it is zero right now), so you have a visual debugging tool at hands.
+- I suggest to start with a pure Poisson equation, i.e. to neglect the impact of ux, uy and uz, and then to add those terms to the equation.
+- Do all your realisation in updateInk() please. You can also set the boundary conditions there.
