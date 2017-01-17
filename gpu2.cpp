@@ -108,13 +108,10 @@ double* Fx;
 double* Fy;
 double* Fz;
 
-/**
- * Helper along x,y and z direction for blocks
+/*
+ * Array to store if the block contains a cell that is in the object.
  */
-double* BKx;
-double* BKy;
-double* BKz;
-bool* BK;
+bool* objectInBlock;
 
 /**
  * Pressure in the cell
@@ -168,6 +165,7 @@ void assertion( bool condition, int line ) {
 
 /**
  * Maps the three coordinates onto one cell index.
+ * This is converting from the raw version to normal one
  */
 int getCellIndex(int ix, int iy, int iz) {
   assertion(ix>=0,__LINE__);
@@ -196,6 +194,7 @@ int getVertexIndex(int ix, int iy, int iz) {
 /**
  * Maps the three coordinates onto the corresponding block.
  * ADDED BY ME
+ * This will take in a raw number that will need to be converted to the corresponding block
  */
 int getBlockIndex(int ix, int iy, int iz) {
   assertion(ix>=0,__LINE__);
@@ -204,7 +203,7 @@ int getBlockIndex(int ix, int iy, int iz) {
   assertion(iy<(numberOfCellsPerAxisY+2)/BLOCKNUMBER,__LINE__);
   assertion(iz>=0,__LINE__);
   assertion(iz<(numberOfCellsPerAxisZ+2)/BLOCKNUMBER,__LINE__);
-  return ix+iy*(numberOfCellsPerAxisX+2/BLOCKNUMBER)+iz*(numberOfCellsPerAxisX+2/BLOCKNUMBER)*(numberOfCellsPerAxisY+2/BLOCKNUMBER);
+  return (ix-1)/BLOCKNUMBER+(iy-1)/BLOCKNUMBER*(numberOfCellsPerAxisX+2)+(iz-1)/BLOCKNUMBER*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
 }
 
 /**
@@ -707,7 +706,7 @@ int computeP() {
         for (int zCood = 0; zCood < numberOfBlocksZ; ++zCood){
           // iterate through every block
 
-          if (BK[getBlockIndex(xCood, yCood, zCood)]){
+          if (objectInBlock[xCood]){
             // this means that it is just fluid meaning that it can be SIMD
 
             for (int ix = 0; ix < BLOCKNUMBER; ++ix){
@@ -852,10 +851,6 @@ void setupScenario() {
   Fy  = 0;
   Fz  = 0;
 
-  BKx = 0;
-  BKy = 0;
-  BKz = 0;
-
   p   = 0;
   rhs = 0;
   ink = 0;
@@ -867,10 +862,7 @@ void setupScenario() {
   Fy  = new (std::nothrow) double[numberOfFacesY];
   Fz  = new (std::nothrow) double[numberOfFacesZ];
 
-  BKx = new (std::nothrow) double[numberOfCellsPerAxisX/BLOCKNUMBER];
-  BKy = new (std::nothrow) double[numberOfCellsPerAxisY/BLOCKNUMBER];
-  BKz = new (std::nothrow) double[numberOfCellsPerAxisZ/BLOCKNUMBER];
-  BK = new (std::nothrow) bool[numberOfBlocks];
+  objectInBlock = new (std::nothrow) bool[numberOfBlocksX];
 
   p   = new (std::nothrow) double[numberOfCells];
   rhs = new (std::nothrow) double[numberOfCells];
@@ -886,9 +878,6 @@ void setupScenario() {
     Fx  == 0 ||
     Fy  == 0 ||
     Fz  == 0 ||
-    BKx  == 0 ||
-    BKy  == 0 ||
-    BKz  == 0 ||
     p   == 0 ||
     rhs == 0
   ) {
@@ -920,7 +909,7 @@ void setupScenario() {
   }
 
   for (int i=0; i<numberOfBlocks; i++) {
-    BK[i]            = false;
+    objectInBlock[i]           = false;
   }
 
   //
@@ -942,62 +931,26 @@ void setupScenario() {
     cellIsInside[ getCellIndex(xOffsetOfObstacle+sizeOfObstacle+1,  2*sizeOfObstacle+2,iz) ] = false;
   }
 
-  // iterate through every BLOCK if in the block, all indexes are fluid then it can be fully SIMD
-  // if half and half then cannot be SIMD 
-  // if fully non-fluid then it can skipped entirely
-  // if it can be fully SIMD then = 0 if half and half = 1 if all empty = 2
-  // bool is faster to check
-  // for each block get the index of a set cell
-  // get the other ones and test them
-  // add the block index to two individual lists half and half or SIMD
+  int blockX;
+  int blockY;
+  int blockZ;
 
-  bool fluid;
-  fluid = false;
-  bool object;
-  object = false;
-
-  for (int xCood = 0; xCood < numberOfBlocksX; ++xCood){
-    for (int yCood = 0; yCood < numberOfBlocksY; ++yCood){
-      for (int zCood = 0; zCood < numberOfBlocksZ; ++zCood){
-        printf("BLOCK: %i,%i,%i\n", xCood, yCood, zCood);
-        // iterate through all block coordinates
-        fluid = false;
-        object = false;
-        // two bools that store the status of the block
-
-        for (int i = 0; i < BLOCKNUMBER; ++i){
-          for (int j = 0; j < BLOCKNUMBER; ++j){
-            for (int k = 0; k < BLOCKNUMBER; ++k){
-              printf("CELL: %i,%i,%i\n", i, j, k);
-              // iterate through all indexes in the block
-              if(cellIsInside[ getCellIndex(xCood * BLOCKNUMBER + i, yCood * BLOCKNUMBER + j, zCood * BLOCKNUMBER + k)]){
-                // if the index is in the object
-                object = true;
-              }
-              else{
-                fluid = true;
-              }
-            }
-          }
+  for (int iz=1; iz<numberOfCellsPerAxisZ+1; iz++) {
+    for (int iy=1; iy<numberOfCellsPerAxisY+1; iy++) {
+      for (int ix=1; ix<numberOfCellsPerAxisX+1; ix++) {
+        // iterate through every cell (they are padded)
+        if (cellIsInside[ getCellIndex(ix, iy, iz) ]){
+          // if the cell is in the object
+          objectInBlock[getBlockIndex(ix,iy,iz)] = true;
+          // get the corresponding block
+          // change the blocks index to true in the objectInBlock array
         }
-        // at this point we have all the information about the block
-        if (fluid and !object){
-          // if the block has only fluid and can therefore be SIMD
-          BK[getBlockIndex(xCood, yCood, zCood)] = true;
-        }
-        if (fluid and object){
-          // if the block has both fluid and object therefore can't be SIMD
-          BK[getBlockIndex(xCood, yCood, zCood)] = false;
-        }
-        // could add another option, this could be done through a struct
-        // for a block that is just object and should always be skipped
       }
     }
   }
 
-  for (int i = 0; i < numberOfBlocks; ++i)
-  {
-    printf("%d\n", BK[i]);
+  for (int i = 0; i < numberOfBlocks; ++i){
+    printf("%d\n", objectInBlock[i]);
   }
 
   validateThatEntriesAreBounded("setupScenario()");
@@ -1020,11 +973,6 @@ void freeDataStructures() {
   delete[] Fz;
   delete[] cellIsInside;
 
-  delete[] BKx;
-  delete[] BKy;
-  delete[] BKz;
-  delete[] BK;
-
   ux  = 0;
   uy  = 0;
   uz  = 0;
@@ -1034,11 +982,6 @@ void freeDataStructures() {
   p   = 0;
   rhs = 0;
   ink = 0;
-
-  BKx = 0;
-  BKy = 0;
-  BKz = 0;
-  BK = 0;
 }
 
 

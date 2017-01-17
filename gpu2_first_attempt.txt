@@ -1,0 +1,74 @@
+ // iterate through every BLOCK if in the block, all indexes are fluid then it can be fully SIMD
+  // if half and half then cannot be SIMD 
+  // if fully non-fluid then it can skipped entirely
+  // if it can be fully SIMD then = 0 if half and half = 1 if all empty = 2
+  // bool is faster to check
+  // for each block get the index of a set cell
+  // get the other ones and test them
+  // add the block index to two individual lists half and half or SIMD
+
+  /*
+
+  bool fluid;
+  fluid = false;
+  bool object;
+  object = false;
+
+  int blockCounter = 0;
+
+  printf("numberOfBlocksX: %i\n", numberOfBlocksX);
+  printf("numberOfBlocksY: %i\n", numberOfBlocksY);
+  printf("numberOfBlocksZ: %i\n", numberOfBlocksZ);
+
+  for (int xCood = 0; xCood < numberOfBlocksX; xCood++){
+    for (int yCood = 0; yCood < numberOfBlocksY; yCood++){
+      for (int zCood = 0; zCood < numberOfBlocksZ; zCood++){
+        // iterate through all block coordinates
+
+        printf("NEW BLOCK ------------\n");
+        printf("xCood: %i\n", xCood);
+        printf("yCood: %i\n", yCood);
+        printf("zCood: %i\n", zCood);
+
+        fluid = false;
+        object = false;
+        // two bools that store the status of the block
+
+        for (int i = 0; i < BLOCKNUMBER; i++){
+          for (int j = 0; j < BLOCKNUMBER; j++){
+            for (int k = 0; k < BLOCKNUMBER; k++){
+              // iterate through all indexes in the block
+
+              printf("the cell index: %i\n", getCellIndex(xCood * BLOCKNUMBER + i, yCood * BLOCKNUMBER + j, zCood * BLOCKNUMBER + k));
+              printf("the if statement: %d\n", cellIsInside[ getCellIndex(xCood * BLOCKNUMBER + i, yCood * BLOCKNUMBER + j, zCood * BLOCKNUMBER + k)]);
+
+              if(cellIsInside[ getCellIndex(xCood * BLOCKNUMBER + i, yCood * BLOCKNUMBER + j, zCood * BLOCKNUMBER + k)]){
+                // if the index is in the object
+                object = true;
+              }
+              else{
+                fluid = true;
+              }
+            }
+          }
+        }
+
+        printf("Object Truth: %d\n", object);
+        printf("Fluid Truth: %d\n", fluid);
+
+        // at this point we have all the information about the block
+        if (fluid and !object){
+          // if the block has only fluid and can therefore be SIMD
+          BK[blockCounter] = true;
+        }
+        else{
+          // if the block has both fluid and object therefore can't be SIMD
+          BK[blockCounter] = false;
+        }
+
+        blockCounter += 1;
+        // could add another option, this could be done through a struct
+        // for a block that is just object and should always be skipped
+      }
+    }
+  }
