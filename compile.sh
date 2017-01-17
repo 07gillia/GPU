@@ -1,1 +1,0 @@
-g++ -O3 gpu.cpp -o gpu.out
