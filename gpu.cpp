@@ -195,7 +195,7 @@ int getVertexIndex(int ix, int iy, int iz) {
  * Maps the three coordinates onto the corresponding block.
  * ADDED BY ME
  */
-int getBlockIndex(int ix, int iy, int iz, BLOCKNUMBER) {
+int getBlockIndex(int ix, int iy, int iz, int BLOCKNUMBER) {
   assertion(ix>=0,__LINE__);
   assertion(ix<(numberOfCellsPerAxisX+2)/BLOCKNUMBER,__LINE__);
   assertion(iy>=0,__LINE__);
@@ -643,6 +643,7 @@ void setPressureBoundaryConditions() {
  *
  * @return Number of iterations required or max number plus one if we had to
  *         stop iterating as the solver diverged.
+ * EDITED MY ME
  */
 int computeP() {
   double       globalResidual         = 1.0;
@@ -745,11 +746,15 @@ void setNewVelocities() {
  * Setup our scenario, i.e. initialise all the big arrays and set the
  * right boundary conditions. This is something you might want to change in
  * part three of the assessment.
+ * EDITED BY ME
  */
 void setupScenario() {
   const int BLOCKNUMBER = 4;
   const int numberOfCells = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
   const int numberOfBlocks = (numberOfCellsPerAxisX+2/BLOCKNUMBER) * (numberOfCellsPerAxisY+2/BLOCKNUMBER) * (numberOfCellsPerAxisZ+2/BLOCKNUMBER);
+  const int numberOfBlocksX = (numberOfCellsPerAxisX+2/BLOCKNUMBER);
+  const int numberOfBlocksY = (numberOfCellsPerAxisY+2/BLOCKNUMBER);
+  const int numberOfBlocksZ = (numberOfCellsPerAxisZ+2/BLOCKNUMBER);
 
   const int numberOfFacesX = (numberOfCellsPerAxisX+3) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
   const int numberOfFacesY = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+3) * (numberOfCellsPerAxisZ+2);
@@ -829,7 +834,6 @@ void setupScenario() {
     Fz[i]=0;
   }
 
-
   //
   // Insert the obstacle that forces the fluid to do something interesting.
   //
@@ -858,8 +862,46 @@ void setupScenario() {
   // get the other ones and test them
   // add the block index to two individual lists half and half or SIMD
 
-  for (int block = 0; block < len(BK); ++block){
-    
+  bool fluid;
+  fluid = false;
+  bool object;
+  object = false;
+
+  for (int xCood = 0; xCood < numberOfBlocksX; ++xCood){
+    for (int yCood = 0; yCood < numberOfBlocksY; ++yCood){
+      for (int zCood = 0; zCood < numberOfBlocksZ; ++zCood){
+        // iterate through all block coordinates
+        fluid = false;
+        object = false;
+        // two bools that store the status of the block
+
+        for (int i = 0; i < 4; ++i){
+          for (int j = 0; j < 4; ++j){
+            for (int k = 0; k < 4; ++k){
+              // iterate through all indexes in the block
+              if(cellIsInside[ getCellIndex(xCood * 4 + i, yCood * 4 + j, zCood * 4 + k)]){
+                // if the index is in the object
+                object = true;
+              }
+              else{
+                fluid = true;
+              }
+            }
+          }
+        }
+        // at this point we have all the information about the block
+        if (fluid and !object){
+          // if the block has only fluid and can therefore be SIMD
+          BK[getBlockIndex(xCood, yCood, zCood, BLOCKNUMBER)] = true;
+        }
+        if (fluid and object){
+          // if the block has both fluid and object therefore can't be SIMD
+          BK[getBlockIndex(xCood, yCood, zCood, BLOCKNUMBER)] = false;
+        }
+        // could add another option, this could be done through a struct
+        // for a block that is just object and should always be skipped
+      }
+    }
   }
 
   validateThatEntriesAreBounded("setupScenario()");
@@ -868,6 +910,7 @@ void setupScenario() {
 
 /**
  * Clean up the system
+ * EDITED BY ME
  */
 void freeDataStructures() {
   delete[] p;
@@ -881,6 +924,11 @@ void freeDataStructures() {
   delete[] Fz;
   delete[] cellIsInside;
 
+  delete[] BKx;
+  delete[] BKy;
+  delete[] BKz;
+  delete[] BK;
+
   ux  = 0;
   uy  = 0;
   uz  = 0;
@@ -890,6 +938,11 @@ void freeDataStructures() {
   p   = 0;
   rhs = 0;
   ink = 0;
+
+  BKx = 0;
+  BKy = 0;
+  BKz = 0;
+  BK = 0;
 }
 
 
