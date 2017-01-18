@@ -6,7 +6,7 @@
 #include <fstream>
 #include <cmath>
 
-#define BLOCKNUMBER 4
+#define BLOCKDIMENTION 4
 
 /**
  * Number of cell we have per axis
@@ -65,7 +65,7 @@ const double PPESolverThreshold                  = 1e-6;
 /**
  * Switch on to have a couple of security checks
  */
-//#define CheckVariableValues
+#define CheckVariableValues
 
 
 /**
@@ -119,12 +119,12 @@ int getVertexIndex(int ix, int iy, int iz) {
  */
 int getBlockIndexFromCellCoordinates(int ix, int iy, int iz) {
   assertion(ix>=0,__LINE__);
-  assertion(ix<(numberOfCellsPerAxisX+2)/BLOCKNUMBER,__LINE__);
+  assertion(ix<(numberOfCellsPerAxisX+2),__LINE__);
   assertion(iy>=0,__LINE__);
-  assertion(iy<(numberOfCellsPerAxisY+2)/BLOCKNUMBER,__LINE__);
+  assertion(iy<(numberOfCellsPerAxisY+2),__LINE__);
   assertion(iz>=0,__LINE__);
-  assertion(iz<(numberOfCellsPerAxisZ+2)/BLOCKNUMBER,__LINE__);
-  return (ix-1)/BLOCKNUMBER+(iy-1)/BLOCKNUMBER*(numberOfCellsPerAxisX+2)+(iz-1)/BLOCKNUMBER*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
+  assertion(iz<(numberOfCellsPerAxisZ+2),__LINE__);
+  return (ix-1)/BLOCKDIMENTION+(iy-1)/BLOCKDIMENTION*(numberOfCellsPerAxisX+2)+(iz-1)/BLOCKDIMENTION*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
 }
 
 /**
@@ -134,12 +134,12 @@ int getBlockIndexFromCellCoordinates(int ix, int iy, int iz) {
  */
 int getBlockIndexFromBlockCoordinates(int ix, int iy, int iz) {
   assertion(ix>=0,__LINE__);
-  assertion(ix<(numberOfCellsPerAxisX+2)/BLOCKNUMBER,__LINE__);
+  assertion(ix<(numberOfCellsPerAxisX+2)/BLOCKDIMENTION,__LINE__);
   assertion(iy>=0,__LINE__);
-  assertion(iy<(numberOfCellsPerAxisY+2)/BLOCKNUMBER,__LINE__);
+  assertion(iy<(numberOfCellsPerAxisY+2)/BLOCKDIMENTION,__LINE__);
   assertion(iz>=0,__LINE__);
-  assertion(iz<(numberOfCellsPerAxisZ+2)/BLOCKNUMBER,__LINE__);
-  return (ix/BLOCKNUMBER)+(iy/BLOCKNUMBER)*(numberOfCellsPerAxisX+2)+(iz/BLOCKNUMBER)*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
+  assertion(iz<(numberOfCellsPerAxisZ+2)/BLOCKDIMENTION,__LINE__);
+  return (ix/BLOCKDIMENTION)+(iy/BLOCKDIMENTION)*(numberOfCellsPerAxisX+2)+(iz/BLOCKDIMENTION)*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
 }
 
 /**
@@ -147,7 +147,7 @@ int getBlockIndexFromBlockCoordinates(int ix, int iy, int iz) {
  *
  * Takes into account that there's one more face in X direction than numberOfCellsPerAxisX.
  */
-int getFaceIndexX(int ix, int iy, int iz) {
+int getFacex_cell_WithHalo(int ix, int iy, int iz) {
   assertion(ix>=0,__LINE__);
   assertion(ix<numberOfCellsPerAxisX+3,__LINE__);
   assertion(iy>=0,__LINE__);
@@ -158,7 +158,7 @@ int getFaceIndexX(int ix, int iy, int iz) {
 }
 
 
-int getFaceIndexY(int ix, int iy, int iz) {
+int getFacey_cell_WithHalo(int ix, int iy, int iz) {
   assertion(ix>=0,__LINE__);
   assertion(ix<numberOfCellsPerAxisX+2,__LINE__);
   assertion(iy>=0,__LINE__);
@@ -169,7 +169,7 @@ int getFaceIndexY(int ix, int iy, int iz) {
 }
 
 
-int getFaceIndexZ(int ix, int iy, int iz) {
+int getFacez_cell_WithHalo(int ix, int iy, int iz) {
   assertion(ix>=0,__LINE__);
   assertion(ix<numberOfCellsPerAxisX+2,__LINE__);
   assertion(iy>=0,__LINE__);
@@ -211,11 +211,11 @@ void validateThatEntriesAreBounded(const std::string&  callingRoutine) {
   for (int ix=0; ix<numberOfCellsPerAxisX+3; ix++)
   for (int iy=0; iy<numberOfCellsPerAxisY+2; iy++)
   for (int iz=0; iz<numberOfCellsPerAxisZ+2; iz++) {
-    if ( std::abs(ux[ getFaceIndexX(ix,iy,iz)])>1e10 ) {
+    if ( std::abs(ux[ getFacex_cell_WithHalo(ix,iy,iz)])>1e10 ) {
       std::cerr << "error in routine " + callingRoutine + " in ux[" << ix << "," << iy << "," << iz << "]" << std::endl;
       exit(-1);
     }
-    if ( std::abs(Fx[ getFaceIndexX(ix,iy,iz)])>1e10 ) {
+    if ( std::abs(Fx[ getFacex_cell_WithHalo(ix,iy,iz)])>1e10 ) {
       std::cerr << "error in routine " + callingRoutine + " in Fx[" << ix << "," << iy << "," << iz << "]" << std::endl;
       exit(-1);
     }
@@ -224,11 +224,11 @@ void validateThatEntriesAreBounded(const std::string&  callingRoutine) {
   for (int ix=0; ix<numberOfCellsPerAxisX+2; ix++)
   for (int iy=0; iy<numberOfCellsPerAxisY+3; iy++)
   for (int iz=0; iz<numberOfCellsPerAxisZ+2; iz++) {
-    if ( std::abs(uy[ getFaceIndexY(ix,iy,iz)])>1e10 ) {
+    if ( std::abs(uy[ getFacey_cell_WithHalo(ix,iy,iz)])>1e10 ) {
         std::cerr << "error in routine " + callingRoutine + " in uy[" << ix << "," << iy << "," << iz << "]" << std::endl;
         exit(-1);
     }
-    if ( std::abs(Fy[ getFaceIndexY(ix,iy,iz)])>1e10 ) {
+    if ( std::abs(Fy[ getFacey_cell_WithHalo(ix,iy,iz)])>1e10 ) {
         std::cerr << "error in routine " + callingRoutine + " in Fy[" << ix << "," << iy << "," << iz << "]" << std::endl;
         exit(-1);
     }
@@ -237,11 +237,11 @@ void validateThatEntriesAreBounded(const std::string&  callingRoutine) {
   for (int ix=0; ix<numberOfCellsPerAxisX+2; ix++)
   for (int iy=0; iy<numberOfCellsPerAxisY+2; iy++)
   for (int iz=0; iz<numberOfCellsPerAxisZ+3; iz++) {
-    if ( std::abs(uz[ getFaceIndexZ(ix,iy,iz)])>1e10 ) {
-      std::cerr << "error in in routine " + callingRoutine + " uz[" << ix << "," << iy << "," << iz << "]: " << uz[ getFaceIndexZ(ix,iy,iz)] << std::endl;
+    if ( std::abs(uz[ getFacez_cell_WithHalo(ix,iy,iz)])>1e10 ) {
+      std::cerr << "error in in routine " + callingRoutine + " uz[" << ix << "," << iy << "," << iz << "]: " << uz[ getFacez_cell_WithHalo(ix,iy,iz)] << std::endl;
       exit(-1);
     }
-    if ( std::abs(Fz[ getFaceIndexZ(ix,iy,iz)])>1e10 ) {
+    if ( std::abs(Fz[ getFacez_cell_WithHalo(ix,iy,iz)])>1e10 ) {
       std::cerr << "error in in routine " + callingRoutine + " Fz[" << ix << "," << iy << "," << iz << "]" << std::endl;
       exit(-1);
     }
@@ -289,9 +289,9 @@ void plotVTKFile() {
   for (int iz=1; iz<numberOfCellsPerAxisZ+2; iz++) {
     for (int iy=1; iy<numberOfCellsPerAxisY+2; iy++) {
       for (int ix=1; ix<numberOfCellsPerAxisX+2; ix++) {
-        out << 0.25 * ( ux[ getFaceIndexX(ix,iy-1,iz-1) ] + ux[ getFaceIndexX(ix,iy-0,iz-1) ] + ux[ getFaceIndexX(ix,iy-1,iz-0) ] + ux[ getFaceIndexX(ix,iy,iz) ] ) << " ";
-        out << 0.25 * ( uy[ getFaceIndexY(ix-1,iy,iz-1) ] + uy[ getFaceIndexY(ix-0,iy,iz-1) ] + uy[ getFaceIndexY(ix-1,iy,iz-0) ] + uy[ getFaceIndexY(ix,iy,iz) ] ) << " ";
-        out << 0.25 * ( uz[ getFaceIndexZ(ix-1,iy-1,iz) ] + uz[ getFaceIndexZ(ix-0,iy-1,iz) ] + uz[ getFaceIndexZ(ix-1,iy-0,iz) ] + uz[ getFaceIndexZ(ix,iy,iz) ] ) << std::endl;
+        out << 0.25 * ( ux[ getFacex_cell_WithHalo(ix,iy-1,iz-1) ] + ux[ getFacex_cell_WithHalo(ix,iy-0,iz-1) ] + ux[ getFacex_cell_WithHalo(ix,iy-1,iz-0) ] + ux[ getFacex_cell_WithHalo(ix,iy,iz) ] ) << " ";
+        out << 0.25 * ( uy[ getFacey_cell_WithHalo(ix-1,iy,iz-1) ] + uy[ getFacey_cell_WithHalo(ix-0,iy,iz-1) ] + uy[ getFacey_cell_WithHalo(ix-1,iy,iz-0) ] + uy[ getFacey_cell_WithHalo(ix,iy,iz) ] ) << " ";
+        out << 0.25 * ( uz[ getFacez_cell_WithHalo(ix-1,iy-1,iz) ] + uz[ getFacez_cell_WithHalo(ix-0,iy-1,iz) ] + uz[ getFacez_cell_WithHalo(ix-1,iy-0,iz) ] + uz[ getFacez_cell_WithHalo(ix,iy,iz) ] ) << std::endl;
       }
     }
   }
@@ -306,9 +306,9 @@ void plotVTKFile() {
   for (int iz=1; iz<numberOfCellsPerAxisZ+2; iz++) {
     for (int iy=1; iy<numberOfCellsPerAxisY+2; iy++) {
       for (int ix=1; ix<numberOfCellsPerAxisX+2; ix++) {
-        out << 0.25 * ( Fx[ getFaceIndexX(ix,iy-1,iz-1) ] + Fx[ getFaceIndexX(ix,iy-0,iz-1) ] + Fx[ getFaceIndexX(ix,iy-1,iz-0) ] + Fx[ getFaceIndexX(ix,iy,iz) ] ) << " ";
-        out << 0.25 * ( Fy[ getFaceIndexY(ix-1,iy,iz-1) ] + Fy[ getFaceIndexY(ix-0,iy,iz-1) ] + Fy[ getFaceIndexY(ix-1,iy,iz-0) ] + Fy[ getFaceIndexY(ix,iy,iz) ] ) << " ";
-        out << 0.25 * ( Fz[ getFaceIndexZ(ix-1,iy-1,iz) ] + Fz[ getFaceIndexZ(ix-0,iy-1,iz) ] + Fz[ getFaceIndexZ(ix-1,iy-0,iz) ] + Fz[ getFaceIndexZ(ix,iy,iz) ] ) << std::endl;
+        out << 0.25 * ( Fx[ getFacex_cell_WithHalo(ix,iy-1,iz-1) ] + Fx[ getFacex_cell_WithHalo(ix,iy-0,iz-1) ] + Fx[ getFacex_cell_WithHalo(ix,iy-1,iz-0) ] + Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] ) << " ";
+        out << 0.25 * ( Fy[ getFacey_cell_WithHalo(ix-1,iy,iz-1) ] + Fy[ getFacey_cell_WithHalo(ix-0,iy,iz-1) ] + Fy[ getFacey_cell_WithHalo(ix-1,iy,iz-0) ] + Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] ) << " ";
+        out << 0.25 * ( Fz[ getFacez_cell_WithHalo(ix-1,iy-1,iz) ] + Fz[ getFacez_cell_WithHalo(ix-0,iy-1,iz) ] + Fz[ getFacez_cell_WithHalo(ix-1,iy-0,iz) ] + Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] ) << std::endl;
       }
     }
   }
@@ -390,21 +390,21 @@ void computeF() {
           cellIsInside[getCellIndex(ix,iy,iz)]
         ) {
           const double diffusiveTerm =
-            + (-1.0 * ux[ getFaceIndexX(ix-1,iy,iz) ] + 2.0 * ux[ getFaceIndexX(ix,iy,iz) ] - 1.0 * ux[ getFaceIndexX(ix+1,iy,iz) ] )
-            + (-1.0 * ux[ getFaceIndexX(ix,iy-1,iz) ] + 2.0 * ux[ getFaceIndexX(ix,iy,iz) ] - 1.0 * ux[ getFaceIndexX(ix,iy+1,iz) ] )
-            + (-1.0 * ux[ getFaceIndexX(ix,iy,iz-1) ] + 2.0 * ux[ getFaceIndexX(ix,iy,iz) ] - 1.0 * ux[ getFaceIndexX(ix,iy,iz+1) ] );
+            + (-1.0 * ux[ getFacex_cell_WithHalo(ix-1,iy,iz) ] + 2.0 * ux[ getFacex_cell_WithHalo(ix,iy,iz) ] - 1.0 * ux[ getFacex_cell_WithHalo(ix+1,iy,iz) ] )
+            + (-1.0 * ux[ getFacex_cell_WithHalo(ix,iy-1,iz) ] + 2.0 * ux[ getFacex_cell_WithHalo(ix,iy,iz) ] - 1.0 * ux[ getFacex_cell_WithHalo(ix,iy+1,iz) ] )
+            + (-1.0 * ux[ getFacex_cell_WithHalo(ix,iy,iz-1) ] + 2.0 * ux[ getFacex_cell_WithHalo(ix,iy,iz) ] - 1.0 * ux[ getFacex_cell_WithHalo(ix,iy,iz+1) ] );
 
           const double convectiveTerm =
-            + ( (ux[ getFaceIndexX(ix,iy,iz) ]+ux[ getFaceIndexX(ix+1,iy,iz) ])*(ux[ getFaceIndexX(ix,iy,iz) ]+ux[ getFaceIndexX(ix+1,iy,iz) ]) - (ux[ getFaceIndexX(ix-1,iy,iz) ]+ux[ getFaceIndexX(ix,iy,iz) ])    *(ux[ getFaceIndexX(ix-1,iy,iz) ]+ux[ getFaceIndexX(ix,iy,iz) ]) )
-            + ( (uy[ getFaceIndexY(ix,iy,iz) ]+uy[ getFaceIndexY(ix+1,iy,iz) ])*(ux[ getFaceIndexX(ix,iy,iz) ]+ux[ getFaceIndexX(ix,iy+1,iz) ]) - (uy[ getFaceIndexY(ix,iy-1,iz) ]+uy[ getFaceIndexY(ix+1,iy-1,iz) ])*(ux[ getFaceIndexX(ix,iy-1,iz) ]+ux[ getFaceIndexX(ix,iy,iz) ]) )
-            + ( (uz[ getFaceIndexZ(ix,iy,iz) ]+uz[ getFaceIndexZ(ix+1,iy,iz) ])*(ux[ getFaceIndexX(ix,iy,iz) ]+ux[ getFaceIndexX(ix,iy,iz+1) ]) - (uz[ getFaceIndexZ(ix,iy,iz-1) ]+uz[ getFaceIndexZ(ix+1,iy,iz-1) ])*(ux[ getFaceIndexX(ix,iy,iz-1) ]+ux[ getFaceIndexX(ix,iy,iz) ]) )
-            + alpha * ( std::abs(ux[ getFaceIndexX(ix,iy,iz) ]+ux[ getFaceIndexX(ix+1,iy,iz) ])*(ux[ getFaceIndexX(ix,iy,iz) ]-ux[ getFaceIndexX(ix+1,iy,iz) ]) - std::abs(ux[ getFaceIndexX(ix-1,iy,iz) ]+ux[ getFaceIndexX(ix,iy,iz) ])    *(ux[ getFaceIndexX(ix-1,iy,iz) ]-ux[ getFaceIndexX(ix,iy,iz) ]) )
-            + alpha * ( std::abs(uy[ getFaceIndexY(ix,iy,iz) ]+uy[ getFaceIndexY(ix+1,iy,iz) ])*(ux[ getFaceIndexX(ix,iy,iz) ]-ux[ getFaceIndexX(ix,iy+1,iz) ]) - std::abs(uy[ getFaceIndexY(ix,iy-1,iz) ]+uy[ getFaceIndexY(ix+1,iy-1,iz) ])*(ux[ getFaceIndexX(ix,iy-1,iz) ]-ux[ getFaceIndexX(ix,iy,iz) ]) )
-            + alpha * ( std::abs(uz[ getFaceIndexZ(ix,iy,iz) ]+uz[ getFaceIndexZ(ix+1,iy,iz) ])*(ux[ getFaceIndexX(ix,iy,iz) ]-ux[ getFaceIndexX(ix,iy,iz+1) ]) - std::abs(uz[ getFaceIndexZ(ix,iy,iz-1) ]+uz[ getFaceIndexZ(ix+1,iy,iz-1) ])*(ux[ getFaceIndexX(ix,iy,iz-1) ]-ux[ getFaceIndexX(ix,iy,iz) ]) )
+            + ( (ux[ getFacex_cell_WithHalo(ix,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix+1,iy,iz) ])*(ux[ getFacex_cell_WithHalo(ix,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix+1,iy,iz) ]) - (ux[ getFacex_cell_WithHalo(ix-1,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix,iy,iz) ])    *(ux[ getFacex_cell_WithHalo(ix-1,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix,iy,iz) ]) )
+            + ( (uy[ getFacey_cell_WithHalo(ix,iy,iz) ]+uy[ getFacey_cell_WithHalo(ix+1,iy,iz) ])*(ux[ getFacex_cell_WithHalo(ix,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix,iy+1,iz) ]) - (uy[ getFacey_cell_WithHalo(ix,iy-1,iz) ]+uy[ getFacey_cell_WithHalo(ix+1,iy-1,iz) ])*(ux[ getFacex_cell_WithHalo(ix,iy-1,iz) ]+ux[ getFacex_cell_WithHalo(ix,iy,iz) ]) )
+            + ( (uz[ getFacez_cell_WithHalo(ix,iy,iz) ]+uz[ getFacez_cell_WithHalo(ix+1,iy,iz) ])*(ux[ getFacex_cell_WithHalo(ix,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix,iy,iz+1) ]) - (uz[ getFacez_cell_WithHalo(ix,iy,iz-1) ]+uz[ getFacez_cell_WithHalo(ix+1,iy,iz-1) ])*(ux[ getFacex_cell_WithHalo(ix,iy,iz-1) ]+ux[ getFacex_cell_WithHalo(ix,iy,iz) ]) )
+            + alpha * ( std::abs(ux[ getFacex_cell_WithHalo(ix,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix+1,iy,iz) ])*(ux[ getFacex_cell_WithHalo(ix,iy,iz) ]-ux[ getFacex_cell_WithHalo(ix+1,iy,iz) ]) - std::abs(ux[ getFacex_cell_WithHalo(ix-1,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix,iy,iz) ])    *(ux[ getFacex_cell_WithHalo(ix-1,iy,iz) ]-ux[ getFacex_cell_WithHalo(ix,iy,iz) ]) )
+            + alpha * ( std::abs(uy[ getFacey_cell_WithHalo(ix,iy,iz) ]+uy[ getFacey_cell_WithHalo(ix+1,iy,iz) ])*(ux[ getFacex_cell_WithHalo(ix,iy,iz) ]-ux[ getFacex_cell_WithHalo(ix,iy+1,iz) ]) - std::abs(uy[ getFacey_cell_WithHalo(ix,iy-1,iz) ]+uy[ getFacey_cell_WithHalo(ix+1,iy-1,iz) ])*(ux[ getFacex_cell_WithHalo(ix,iy-1,iz) ]-ux[ getFacex_cell_WithHalo(ix,iy,iz) ]) )
+            + alpha * ( std::abs(uz[ getFacez_cell_WithHalo(ix,iy,iz) ]+uz[ getFacez_cell_WithHalo(ix+1,iy,iz) ])*(ux[ getFacex_cell_WithHalo(ix,iy,iz) ]-ux[ getFacex_cell_WithHalo(ix,iy,iz+1) ]) - std::abs(uz[ getFacez_cell_WithHalo(ix,iy,iz-1) ]+uz[ getFacez_cell_WithHalo(ix+1,iy,iz-1) ])*(ux[ getFacex_cell_WithHalo(ix,iy,iz-1) ]-ux[ getFacex_cell_WithHalo(ix,iy,iz) ]) )
             ;
 
-          Fx[ getFaceIndexX(ix,iy,iz) ] =
-           ux[ getFaceIndexX(ix,iy,iz) ]
+          Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] =
+           ux[ getFacex_cell_WithHalo(ix,iy,iz) ]
            - timeStepSize/ReynoldsNumber * 1.0/getH()/getH() * diffusiveTerm
            - timeStepSize * 1.0/getH()/4.0 * convectiveTerm;
         }
@@ -421,22 +421,22 @@ void computeF() {
           cellIsInside[getCellIndex(ix,iy,iz)]
         ) {
           const double diffusiveTerm =
-           + (-1.0 * uy[ getFaceIndexY(ix-1,iy,iz) ] + 2.0 * uy[ getFaceIndexY(ix,iy,iz) ] - 1.0 * uy[ getFaceIndexY(ix+1,iy,iz) ] )
-           + (-1.0 * uy[ getFaceIndexY(ix,iy-1,iz) ] + 2.0 * uy[ getFaceIndexY(ix,iy,iz) ] - 1.0 * uy[ getFaceIndexY(ix,iy+1,iz) ] )
-           + (-1.0 * uy[ getFaceIndexY(ix,iy,iz-1) ] + 2.0 * uy[ getFaceIndexY(ix,iy,iz) ] - 1.0 * uy[ getFaceIndexY(ix,iy,iz+1) ] )
+           + (-1.0 * uy[ getFacey_cell_WithHalo(ix-1,iy,iz) ] + 2.0 * uy[ getFacey_cell_WithHalo(ix,iy,iz) ] - 1.0 * uy[ getFacey_cell_WithHalo(ix+1,iy,iz) ] )
+           + (-1.0 * uy[ getFacey_cell_WithHalo(ix,iy-1,iz) ] + 2.0 * uy[ getFacey_cell_WithHalo(ix,iy,iz) ] - 1.0 * uy[ getFacey_cell_WithHalo(ix,iy+1,iz) ] )
+           + (-1.0 * uy[ getFacey_cell_WithHalo(ix,iy,iz-1) ] + 2.0 * uy[ getFacey_cell_WithHalo(ix,iy,iz) ] - 1.0 * uy[ getFacey_cell_WithHalo(ix,iy,iz+1) ] )
            ;
 
           const double convectiveTerm =
-           + ( (ux[ getFaceIndexX(ix,iy,iz) ]+ux[ getFaceIndexX(ix,iy+1,iz) ])*(uy[ getFaceIndexY(ix,iy,iz) ]+uy[ getFaceIndexY(ix+1,iy,iz) ]) - (ux[ getFaceIndexX(ix-1,iy,iz) ]+ux[ getFaceIndexX(ix-1,iy+1,iz) ]) *(uy[ getFaceIndexY(ix-1,iy,iz) ]+uy[ getFaceIndexY(ix,iy,iz) ]) )
-           + ( (uy[ getFaceIndexY(ix,iy,iz) ]+uy[ getFaceIndexY(ix,iy+1,iz) ])*(uy[ getFaceIndexY(ix,iy,iz) ]+uy[ getFaceIndexY(ix,iy+1,iz) ]) - (uy[ getFaceIndexY(ix,iy-1,iz) ]+uy[ getFaceIndexY(ix,iy,iz) ])     *(uy[ getFaceIndexY(ix,iy-1,iz) ]+uy[ getFaceIndexY(ix,iy,iz) ]) )
-           + ( (uz[ getFaceIndexZ(ix,iy,iz) ]+uz[ getFaceIndexZ(ix,iy+1,iz) ])*(uy[ getFaceIndexY(ix,iy,iz) ]+uy[ getFaceIndexY(ix,iy,iz+1) ]) - (uz[ getFaceIndexZ(ix,iy,iz-1) ]+uz[ getFaceIndexZ(ix,iy+1,iz-1) ]) *(uy[ getFaceIndexY(ix,iy,iz-1) ]+uy[ getFaceIndexY(ix,iy,iz) ]) )
-           + alpha * ( std::abs(ux[ getFaceIndexX(ix,iy,iz) ]+ux[ getFaceIndexX(ix,iy+1,iz) ])*(uy[ getFaceIndexY(ix,iy,iz) ]-uy[ getFaceIndexY(ix+1,iy,iz) ]) - std::abs(ux[ getFaceIndexX(ix-1,iy,iz) ]+ux[ getFaceIndexX(ix-1,iy+1,iz) ]) *(uy[ getFaceIndexY(ix-1,iy,iz) ]-uy[ getFaceIndexY(ix,iy,iz) ]) )
-           + alpha * ( std::abs(uy[ getFaceIndexY(ix,iy,iz) ]+uy[ getFaceIndexY(ix,iy+1,iz) ])*(uy[ getFaceIndexY(ix,iy,iz) ]-uy[ getFaceIndexY(ix,iy+1,iz) ]) - std::abs(uy[ getFaceIndexY(ix,iy-1,iz) ]+uy[ getFaceIndexY(ix,iy,iz) ])     *(uy[ getFaceIndexY(ix,iy-1,iz) ]-uy[ getFaceIndexY(ix,iy,iz) ]) )
-           + alpha * ( std::abs(uz[ getFaceIndexZ(ix,iy,iz) ]+uz[ getFaceIndexZ(ix,iy+1,iz) ])*(uy[ getFaceIndexY(ix,iy,iz) ]-uy[ getFaceIndexY(ix,iy,iz+1) ]) - std::abs(uz[ getFaceIndexZ(ix,iy,iz-1) ]+uz[ getFaceIndexZ(ix,iy+1,iz-1) ]) *(uy[ getFaceIndexY(ix,iy,iz-1) ]-uy[ getFaceIndexY(ix,iy,iz) ]) )
+           + ( (ux[ getFacex_cell_WithHalo(ix,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix,iy+1,iz) ])*(uy[ getFacey_cell_WithHalo(ix,iy,iz) ]+uy[ getFacey_cell_WithHalo(ix+1,iy,iz) ]) - (ux[ getFacex_cell_WithHalo(ix-1,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix-1,iy+1,iz) ]) *(uy[ getFacey_cell_WithHalo(ix-1,iy,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy,iz) ]) )
+           + ( (uy[ getFacey_cell_WithHalo(ix,iy,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy+1,iz) ])*(uy[ getFacey_cell_WithHalo(ix,iy,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy+1,iz) ]) - (uy[ getFacey_cell_WithHalo(ix,iy-1,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy,iz) ])     *(uy[ getFacey_cell_WithHalo(ix,iy-1,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy,iz) ]) )
+           + ( (uz[ getFacez_cell_WithHalo(ix,iy,iz) ]+uz[ getFacez_cell_WithHalo(ix,iy+1,iz) ])*(uy[ getFacey_cell_WithHalo(ix,iy,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy,iz+1) ]) - (uz[ getFacez_cell_WithHalo(ix,iy,iz-1) ]+uz[ getFacez_cell_WithHalo(ix,iy+1,iz-1) ]) *(uy[ getFacey_cell_WithHalo(ix,iy,iz-1) ]+uy[ getFacey_cell_WithHalo(ix,iy,iz) ]) )
+           + alpha * ( std::abs(ux[ getFacex_cell_WithHalo(ix,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix,iy+1,iz) ])*(uy[ getFacey_cell_WithHalo(ix,iy,iz) ]-uy[ getFacey_cell_WithHalo(ix+1,iy,iz) ]) - std::abs(ux[ getFacex_cell_WithHalo(ix-1,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix-1,iy+1,iz) ]) *(uy[ getFacey_cell_WithHalo(ix-1,iy,iz) ]-uy[ getFacey_cell_WithHalo(ix,iy,iz) ]) )
+           + alpha * ( std::abs(uy[ getFacey_cell_WithHalo(ix,iy,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy+1,iz) ])*(uy[ getFacey_cell_WithHalo(ix,iy,iz) ]-uy[ getFacey_cell_WithHalo(ix,iy+1,iz) ]) - std::abs(uy[ getFacey_cell_WithHalo(ix,iy-1,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy,iz) ])     *(uy[ getFacey_cell_WithHalo(ix,iy-1,iz) ]-uy[ getFacey_cell_WithHalo(ix,iy,iz) ]) )
+           + alpha * ( std::abs(uz[ getFacez_cell_WithHalo(ix,iy,iz) ]+uz[ getFacez_cell_WithHalo(ix,iy+1,iz) ])*(uy[ getFacey_cell_WithHalo(ix,iy,iz) ]-uy[ getFacey_cell_WithHalo(ix,iy,iz+1) ]) - std::abs(uz[ getFacez_cell_WithHalo(ix,iy,iz-1) ]+uz[ getFacez_cell_WithHalo(ix,iy+1,iz-1) ]) *(uy[ getFacey_cell_WithHalo(ix,iy,iz-1) ]-uy[ getFacey_cell_WithHalo(ix,iy,iz) ]) )
            ;
 
-          Fy[ getFaceIndexY(ix,iy,iz) ] =
-           uy[ getFaceIndexY(ix,iy,iz) ]
+          Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] =
+           uy[ getFacey_cell_WithHalo(ix,iy,iz) ]
            - timeStepSize/ReynoldsNumber * 1.0/getH()/getH() * diffusiveTerm
            - timeStepSize * 1.0/getH()/4.0 * convectiveTerm;
         }
@@ -453,22 +453,22 @@ void computeF() {
           cellIsInside[getCellIndex(ix,iy,iz)]
         ) {
           const double diffusiveTerm =
-           + (-1.0 * uz[ getFaceIndexZ(ix-1,iy,iz) ] + 2.0 * uz[ getFaceIndexZ(ix,iy,iz) ] - 1.0 * uz[ getFaceIndexZ(ix+1,iy,iz) ] )
-           + (-1.0 * uz[ getFaceIndexZ(ix,iy-1,iz) ] + 2.0 * uz[ getFaceIndexZ(ix,iy,iz) ] - 1.0 * uz[ getFaceIndexZ(ix,iy+1,iz) ] )
-           + (-1.0 * uz[ getFaceIndexZ(ix,iy,iz-1) ] + 2.0 * uz[ getFaceIndexZ(ix,iy,iz) ] - 1.0 * uz[ getFaceIndexZ(ix,iy,iz+1) ] )
+           + (-1.0 * uz[ getFacez_cell_WithHalo(ix-1,iy,iz) ] + 2.0 * uz[ getFacez_cell_WithHalo(ix,iy,iz) ] - 1.0 * uz[ getFacez_cell_WithHalo(ix+1,iy,iz) ] )
+           + (-1.0 * uz[ getFacez_cell_WithHalo(ix,iy-1,iz) ] + 2.0 * uz[ getFacez_cell_WithHalo(ix,iy,iz) ] - 1.0 * uz[ getFacez_cell_WithHalo(ix,iy+1,iz) ] )
+           + (-1.0 * uz[ getFacez_cell_WithHalo(ix,iy,iz-1) ] + 2.0 * uz[ getFacez_cell_WithHalo(ix,iy,iz) ] - 1.0 * uz[ getFacez_cell_WithHalo(ix,iy,iz+1) ] )
            ;
 
           const double convectiveTerm =
-           + ( (ux[ getFaceIndexX(ix,iy,iz) ]+ux[ getFaceIndexX(ix,iy,iz+1) ])*(uz[ getFaceIndexZ(ix,iy,iz) ]+uz[ getFaceIndexZ(ix+1,iy,iz) ]) - (ux[ getFaceIndexX(ix-1,iy,iz) ]+ux[ getFaceIndexX(ix-1,iy,iz+1) ]) *(uz[ getFaceIndexZ(ix-1,iy,iz) ]+uz[ getFaceIndexZ(ix,iy,iz) ]) )
-           + ( (uy[ getFaceIndexY(ix,iy,iz) ]+uy[ getFaceIndexY(ix,iy,iz+1) ])*(uz[ getFaceIndexZ(ix,iy,iz) ]+uz[ getFaceIndexZ(ix,iy+1,iz) ]) - (uy[ getFaceIndexY(ix,iy-1,iz) ]+uy[ getFaceIndexY(ix,iy-1,iz+1) ]) *(uz[ getFaceIndexZ(ix,iy-1,iz) ]+uz[ getFaceIndexZ(ix,iy,iz) ]) )
-           + ( (uz[ getFaceIndexZ(ix,iy,iz) ]+uz[ getFaceIndexZ(ix,iy,iz+1) ])*(uz[ getFaceIndexZ(ix,iy,iz) ]+uz[ getFaceIndexZ(ix,iy,iz+1) ]) - (uz[ getFaceIndexZ(ix,iy,iz-1) ]+uz[ getFaceIndexZ(ix,iy,iz) ])     *(uz[ getFaceIndexZ(ix,iy,iz-1) ]+uz[ getFaceIndexZ(ix,iy,iz) ]) )
-           + alpha * ( std::abs(ux[ getFaceIndexX(ix,iy,iz) ]+ux[ getFaceIndexX(ix,iy,iz+1) ])*(uz[ getFaceIndexZ(ix,iy,iz) ]-uz[ getFaceIndexZ(ix+1,iy,iz) ]) - std::abs(ux[ getFaceIndexX(ix-1,iy,iz) ]+ux[ getFaceIndexX(ix-1,iy,iz+1) ]) *(uz[ getFaceIndexZ(ix-1,iy,iz) ]-uz[ getFaceIndexZ(ix,iy,iz) ]) )
-           + alpha * ( std::abs(uy[ getFaceIndexY(ix,iy,iz) ]+uy[ getFaceIndexY(ix,iy,iz+1) ])*(uz[ getFaceIndexZ(ix,iy,iz) ]-uz[ getFaceIndexZ(ix,iy+1,iz) ]) - std::abs(uy[ getFaceIndexY(ix,iy-1,iz) ]+uy[ getFaceIndexY(ix,iy-1,iz+1) ]) *(uz[ getFaceIndexZ(ix,iy-1,iz) ]-uz[ getFaceIndexZ(ix,iy,iz) ]) )
-           + alpha * ( std::abs(uz[ getFaceIndexZ(ix,iy,iz) ]+uz[ getFaceIndexZ(ix,iy,iz+1) ])*(uz[ getFaceIndexZ(ix,iy,iz) ]-uz[ getFaceIndexZ(ix,iy,iz+1) ]) - std::abs(uz[ getFaceIndexZ(ix,iy,iz-1) ]+uz[ getFaceIndexZ(ix,iy,iz) ])     *(uz[ getFaceIndexZ(ix,iy,iz-1) ]-uz[ getFaceIndexZ(ix,iy,iz) ]) )
+           + ( (ux[ getFacex_cell_WithHalo(ix,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix,iy,iz+1) ])*(uz[ getFacez_cell_WithHalo(ix,iy,iz) ]+uz[ getFacez_cell_WithHalo(ix+1,iy,iz) ]) - (ux[ getFacex_cell_WithHalo(ix-1,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix-1,iy,iz+1) ]) *(uz[ getFacez_cell_WithHalo(ix-1,iy,iz) ]+uz[ getFacez_cell_WithHalo(ix,iy,iz) ]) )
+           + ( (uy[ getFacey_cell_WithHalo(ix,iy,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy,iz+1) ])*(uz[ getFacez_cell_WithHalo(ix,iy,iz) ]+uz[ getFacez_cell_WithHalo(ix,iy+1,iz) ]) - (uy[ getFacey_cell_WithHalo(ix,iy-1,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy-1,iz+1) ]) *(uz[ getFacez_cell_WithHalo(ix,iy-1,iz) ]+uz[ getFacez_cell_WithHalo(ix,iy,iz) ]) )
+           + ( (uz[ getFacez_cell_WithHalo(ix,iy,iz) ]+uz[ getFacez_cell_WithHalo(ix,iy,iz+1) ])*(uz[ getFacez_cell_WithHalo(ix,iy,iz) ]+uz[ getFacez_cell_WithHalo(ix,iy,iz+1) ]) - (uz[ getFacez_cell_WithHalo(ix,iy,iz-1) ]+uz[ getFacez_cell_WithHalo(ix,iy,iz) ])     *(uz[ getFacez_cell_WithHalo(ix,iy,iz-1) ]+uz[ getFacez_cell_WithHalo(ix,iy,iz) ]) )
+           + alpha * ( std::abs(ux[ getFacex_cell_WithHalo(ix,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix,iy,iz+1) ])*(uz[ getFacez_cell_WithHalo(ix,iy,iz) ]-uz[ getFacez_cell_WithHalo(ix+1,iy,iz) ]) - std::abs(ux[ getFacex_cell_WithHalo(ix-1,iy,iz) ]+ux[ getFacex_cell_WithHalo(ix-1,iy,iz+1) ]) *(uz[ getFacez_cell_WithHalo(ix-1,iy,iz) ]-uz[ getFacez_cell_WithHalo(ix,iy,iz) ]) )
+           + alpha * ( std::abs(uy[ getFacey_cell_WithHalo(ix,iy,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy,iz+1) ])*(uz[ getFacez_cell_WithHalo(ix,iy,iz) ]-uz[ getFacez_cell_WithHalo(ix,iy+1,iz) ]) - std::abs(uy[ getFacey_cell_WithHalo(ix,iy-1,iz) ]+uy[ getFacey_cell_WithHalo(ix,iy-1,iz+1) ]) *(uz[ getFacez_cell_WithHalo(ix,iy-1,iz) ]-uz[ getFacez_cell_WithHalo(ix,iy,iz) ]) )
+           + alpha * ( std::abs(uz[ getFacez_cell_WithHalo(ix,iy,iz) ]+uz[ getFacez_cell_WithHalo(ix,iy,iz+1) ])*(uz[ getFacez_cell_WithHalo(ix,iy,iz) ]-uz[ getFacez_cell_WithHalo(ix,iy,iz+1) ]) - std::abs(uz[ getFacez_cell_WithHalo(ix,iy,iz-1) ]+uz[ getFacez_cell_WithHalo(ix,iy,iz) ])     *(uz[ getFacez_cell_WithHalo(ix,iy,iz-1) ]-uz[ getFacez_cell_WithHalo(ix,iy,iz) ]) )
            ;
 
-          Fz[ getFaceIndexZ(ix,iy,iz) ] =
-           uz[ getFaceIndexZ(ix,iy,iz) ]
+          Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] =
+           uz[ getFacez_cell_WithHalo(ix,iy,iz) ]
            - timeStepSize/ReynoldsNumber * 1.0/getH()/getH() * diffusiveTerm
            - timeStepSize * 1.0/getH()/4.0 * convectiveTerm;
         }
@@ -491,9 +491,9 @@ void computeRhs() {
         if ( cellIsInside[getCellIndex(ix,iy,iz)] ) {
           rhs[ getCellIndex(ix,iy,iz) ] = 1.0/timeStepSize/getH()*
             (
-              Fx[getFaceIndexX(ix+1,iy,iz)] - Fx[getFaceIndexX(ix,iy,iz)] +
-              Fy[getFaceIndexY(ix,iy+1,iz)] - Fy[getFaceIndexY(ix,iy,iz)] +
-              Fz[getFaceIndexZ(ix,iy,iz+1)] - Fz[getFaceIndexZ(ix,iy,iz)]
+              Fx[getFacex_cell_WithHalo(ix+1,iy,iz)] - Fx[getFacex_cell_WithHalo(ix,iy,iz)] +
+              Fy[getFacey_cell_WithHalo(ix,iy+1,iz)] - Fy[getFacey_cell_WithHalo(ix,iy,iz)] +
+              Fz[getFacez_cell_WithHalo(ix,iy,iz+1)] - Fz[getFacez_cell_WithHalo(ix,iy,iz)]
             );
         }
       }
@@ -631,40 +631,62 @@ int computeP() {
         }
       }
     }
+
+    for (int iz=1; iz<numberOfCellsPerAxisZ+1; iz++) {
+      for (int iy=1; iy<numberOfCellsPerAxisY+1; iy++) {
+        for (int ix=1; ix<numberOfCellsPerAxisX+1; ix++) {
+          if (iz <= numberOfCellsPerAxisZ and iy <= numberOfCellsPerAxisY and ix <= numberOfCellsPerAxisX){
+            printf("----\n");
+            printf("%i\n", iz);
+            printf("%i\n", iy);
+            printf("%i\n", ix);
+          }
+        }
+      }
+    }
     */
     
-    const int numberOfBlocksX = (numberOfCellsPerAxisX/BLOCKNUMBER);
-    const int numberOfBlocksY = (numberOfCellsPerAxisY/BLOCKNUMBER);
-    const int numberOfBlocksZ = (numberOfCellsPerAxisZ/BLOCKNUMBER);
+    const int numberOfBlocksX = (numberOfCellsPerAxisX/BLOCKDIMENTION);
+    const int numberOfBlocksY = (numberOfCellsPerAxisY/BLOCKDIMENTION);
+    const int numberOfBlocksZ = (numberOfCellsPerAxisZ/BLOCKDIMENTION);
 
-    for (int xCood = 0; xCood < numberOfBlocksX; ++xCood){
-      for (int yCood = 0; yCood < numberOfBlocksY; ++yCood){
-        for (int zCood = 0; zCood < numberOfBlocksZ; ++zCood){
+    /*
+    printf("-------------\n");
+    printf("%i\n", numberOfBlocksX);
+    printf("%i\n", numberOfBlocksY);
+    printf("%i\n", numberOfBlocksZ);
+    */
+
+    for (int x_Block_NoHalo = 0; x_Block_NoHalo < numberOfBlocksX; ++x_Block_NoHalo){
+      for (int y_Block_NoHalo = 0; y_Block_NoHalo < numberOfBlocksY; ++y_Block_NoHalo){
+        for (int z_Block_NoHalo = 0; z_Block_NoHalo < numberOfBlocksZ; ++z_Block_NoHalo){
           // iterate through every block
 
-          if (!objectInBlock[getBlockIndexFromBlockCoordinates(xCood,yCood,zCood)]){
+          // !objectInBlock[getBlockIndexFromBlockCoordinates(x_Block_NoHalo,y_Block_NoHalo,z_Block_NoHalo)]
+
+          if (false){
             // this means that it is just fluid meaning that it can be SIMD
 
-            for (int ix = 0; ix < BLOCKNUMBER; ++ix){
-              for (int iy = 0; iy < BLOCKNUMBER; ++iy){
-                for (int iz = 0; iz < BLOCKNUMBER; ++iz){
+            for (int iz = 0; iz < BLOCKDIMENTION; ++iz){
+              for (int iy = 0; iy < BLOCKDIMENTION; ++iy){
+                for (int ix = 0; ix < BLOCKDIMENTION; ++ix){
                   // iterate through all indexes in the block
-                  int indexX = xCood * BLOCKNUMBER + ix;
-                  int indexY = yCood * BLOCKNUMBER + iy;
-                  int indexZ = zCood * BLOCKNUMBER + iz;
+                  int x_cell_WithHalo = x_Block_NoHalo * BLOCKDIMENTION + ix;
+                  int y_cell_WithHalo = y_Block_NoHalo * BLOCKDIMENTION + iy;
+                  int z_cell_WithHalo = z_Block_NoHalo * BLOCKDIMENTION + iz;
                   // the index of current
 
-                  if ( cellIsInside[getCellIndex(indexX,indexY,indexZ)] ) {
-                    double residual = rhs[ getCellIndex(indexX,indexY,indexZ) ] +
+                  if ( cellIsInside[getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo)] ) {
+                    double residual = rhs[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo) ] +
                       1.0/getH()/getH()*
                       (
-                        - 1.0 * p[ getCellIndex(indexX-1,indexY,indexZ) ]
-                        - 1.0 * p[ getCellIndex(indexX+1,indexY,indexZ) ]
-                        - 1.0 * p[ getCellIndex(indexX,indexY-1,indexZ) ]
-                        - 1.0 * p[ getCellIndex(indexX,indexY+1,indexZ) ]
-                        - 1.0 * p[ getCellIndex(indexX,indexY,indexZ-1) ]
-                        - 1.0 * p[ getCellIndex(indexX,indexY,indexZ+1) ]
-                        + 6.0 * p[ getCellIndex(indexX,indexY,indexZ) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo-1,y_cell_WithHalo,z_cell_WithHalo) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo+1,y_cell_WithHalo,z_cell_WithHalo) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo-1,z_cell_WithHalo) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo+1,z_cell_WithHalo) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo-1) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo+1) ]
+                        + 6.0 * p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo) ]
                     );
                     globalResidual              += residual * residual;
                     p[ getCellIndex(ix,iy,iz) ] += -omega * residual / 6.0 * getH() * getH();
@@ -676,29 +698,39 @@ int computeP() {
           else{
             // this means that it is a mixture of fluid and object this cannot be SIMD
 
-            for (int ix = 0; ix < BLOCKNUMBER; ++ix){
-              for (int iy = 0; iy < BLOCKNUMBER; ++iy){
-                for (int iz = 0; iz < BLOCKNUMBER; ++iz){
+            for (int ix = 0; ix < BLOCKDIMENTION; ++ix){
+              for (int iy = 0; iy < BLOCKDIMENTION; ++iy){
+                for (int iz = 0; iz < BLOCKDIMENTION; ++iz){
                   // iterate through all indexes in the block
-                  int indexX = xCood * BLOCKNUMBER + ix;
-                  int indexY = yCood * BLOCKNUMBER + iy;
-                  int indexZ = zCood * BLOCKNUMBER + iz;
+                  int x_cell_WithHalo = (x_Block_NoHalo) * BLOCKDIMENTION + ix + 1;
+                  int y_cell_WithHalo = (y_Block_NoHalo) * BLOCKDIMENTION + iy + 1;
+                  int z_cell_WithHalo = (z_Block_NoHalo) * BLOCKDIMENTION + iz + 1;
                   // the index of current
+                  /*
+                  if (z_cell_WithHalo <= numberOfCellsPerAxisZ and y_cell_WithHalo <= numberOfCellsPerAxisY and x_cell_WithHalo <= numberOfCellsPerAxisX)
+                  {
+                    printf("------\n");
+                    printf("%i\n", z_cell_WithHalo);
+                    printf("%i\n", y_cell_WithHalo);
+                    printf("%i\n", x_cell_WithHalo);
+                    printf("------\n");
+                  }
+                  */
 
-                  if ( cellIsInside[getCellIndex(indexX,indexY,indexZ)] ) {
-                    double residual = rhs[ getCellIndex(indexX,indexY,indexZ) ] +
+                  if ( cellIsInside[getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo)] ) {
+                    double residual = rhs[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo) ] +
                       1.0/getH()/getH()*
                       (
-                        - 1.0 * p[ getCellIndex(indexX-1,indexY,indexZ) ]
-                        - 1.0 * p[ getCellIndex(indexX+1,indexY,indexZ) ]
-                        - 1.0 * p[ getCellIndex(indexX,indexY-1,indexZ) ]
-                        - 1.0 * p[ getCellIndex(indexX,indexY+1,indexZ) ]
-                        - 1.0 * p[ getCellIndex(indexX,indexY,indexZ-1) ]
-                        - 1.0 * p[ getCellIndex(indexX,indexY,indexZ+1) ]
-                        + 6.0 * p[ getCellIndex(indexX,indexY,indexZ) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo-1,y_cell_WithHalo,z_cell_WithHalo) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo+1,y_cell_WithHalo,z_cell_WithHalo) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo-1,z_cell_WithHalo) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo+1,z_cell_WithHalo) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo-1) ]
+                        - 1.0 * p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo+1) ]
+                        + 6.0 * p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo) ]
                     );
                     globalResidual              += residual * residual;
-                    p[ getCellIndex(ix,iy,iz) ] += -omega * residual / 6.0 * getH() * getH();
+                    p[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo) ] += -omega * residual / 6.0 * getH() * getH();
                   }
                 }
               }
@@ -714,6 +746,8 @@ int computeP() {
     globalResidual        = std::sqrt(globalResidual);
     firstResidual         = firstResidual==0 ? globalResidual : firstResidual;
     iterations++;
+
+    break;
   }
 
   std::cout << "iterations n=" << iterations
@@ -740,7 +774,7 @@ void setNewVelocities() {
   for (int iz=1; iz<numberOfCellsPerAxisZ+2-1; iz++) {
     for (int iy=1; iy<numberOfCellsPerAxisY+2-1; iy++) {
       for (int ix=2; ix<numberOfCellsPerAxisX+3-2; ix++) {
-        ux[ getFaceIndexX(ix,iy,iz) ] = Fx[ getFaceIndexX(ix,iy,iz) ] - timeStepSize/getH() * ( p[getCellIndex(ix,iy,iz)] - p[getCellIndex(ix-1,iy,iz)]);
+        ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] - timeStepSize/getH() * ( p[getCellIndex(ix,iy,iz)] - p[getCellIndex(ix-1,iy,iz)]);
       }
     }
   }
@@ -748,7 +782,7 @@ void setNewVelocities() {
   for (int iz=1; iz<numberOfCellsPerAxisZ+2-1; iz++) {
     for (int iy=2; iy<numberOfCellsPerAxisY+3-2; iy++) {
       for (int ix=1; ix<numberOfCellsPerAxisX+2-1; ix++) {
-        uy[ getFaceIndexY(ix,iy,iz) ] = Fy[ getFaceIndexY(ix,iy,iz) ] - timeStepSize/getH() * ( p[getCellIndex(ix,iy,iz)] - p[getCellIndex(ix,iy-1,iz)]);
+        uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] - timeStepSize/getH() * ( p[getCellIndex(ix,iy,iz)] - p[getCellIndex(ix,iy-1,iz)]);
       }
     }
   }
@@ -756,7 +790,7 @@ void setNewVelocities() {
   for (int iz=2; iz<numberOfCellsPerAxisZ+3-2; iz++) {
     for (int iy=1; iy<numberOfCellsPerAxisY+2-1; iy++) {
       for (int ix=1; ix<numberOfCellsPerAxisX+2-1; ix++) {
-        uz[ getFaceIndexZ(ix,iy,iz) ] = Fz[ getFaceIndexZ(ix,iy,iz) ] - timeStepSize/getH() * ( p[getCellIndex(ix,iy,iz)] - p[getCellIndex(ix,iy,iz-1)]);
+        uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] - timeStepSize/getH() * ( p[getCellIndex(ix,iy,iz)] - p[getCellIndex(ix,iy,iz-1)]);
       }
     }
   }
@@ -771,10 +805,10 @@ void setNewVelocities() {
  */
 void setupScenario() {
   const int numberOfCells = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
-  const int numberOfBlocks = (numberOfCellsPerAxisX/BLOCKNUMBER) * (numberOfCellsPerAxisY/BLOCKNUMBER) * (numberOfCellsPerAxisZ/BLOCKNUMBER);
-  const int numberOfBlocksX = (numberOfCellsPerAxisX/BLOCKNUMBER);
-  const int numberOfBlocksY = (numberOfCellsPerAxisY/BLOCKNUMBER);
-  const int numberOfBlocksZ = (numberOfCellsPerAxisZ/BLOCKNUMBER);
+  const int numberOfBlocks = (numberOfCellsPerAxisX/BLOCKDIMENTION) * (numberOfCellsPerAxisY/BLOCKDIMENTION) * (numberOfCellsPerAxisZ/BLOCKDIMENTION);
+  const int numberOfBlocksX = (numberOfCellsPerAxisX/BLOCKDIMENTION);
+  const int numberOfBlocksY = (numberOfCellsPerAxisY/BLOCKDIMENTION);
+  const int numberOfBlocksZ = (numberOfCellsPerAxisZ/BLOCKDIMENTION);
 
   const int numberOfFacesX = (numberOfCellsPerAxisX+3) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
   const int numberOfFacesY = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+3) * (numberOfCellsPerAxisZ+2);
@@ -884,11 +918,11 @@ void setupScenario() {
       }
     }
   }
-
+/*
   for (int i = 0; i < numberOfBlocks; ++i){
     printf("%d\n", objectInBlock[i]);
   }
-
+*/
   validateThatEntriesAreBounded("setupScenario()");
 }
 
@@ -946,66 +980,66 @@ void setVelocityBoundaryConditions(double time) {
   for (iy=0; iy<numberOfCellsPerAxisY+2; iy++) {
     for (iz=0; iz<numberOfCellsPerAxisZ+2; iz++) {
       ix=0;
-      ux[ getFaceIndexX(ix,iy,iz) ] = 0.0;
+      ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = 0.0;
       ix=1;
-      ux[ getFaceIndexX(ix,iy,iz) ] = 0.0;
+      ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = 0.0;
 
       ix=0;
-      uy[ getFaceIndexY(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uy[ getFaceIndexY(ix+1,iy,iz) ];
-      uz[ getFaceIndexZ(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uz[ getFaceIndexZ(ix+1,iy,iz) ];
+      uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uy[ getFacey_cell_WithHalo(ix+1,iy,iz) ];
+      uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uz[ getFacez_cell_WithHalo(ix+1,iy,iz) ];
 
       ix=numberOfCellsPerAxisX+2;
-      ux[ getFaceIndexX(ix,iy,iz) ] = 0.0;
+      ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = 0.0;
       ix=numberOfCellsPerAxisX+1;
-      ux[ getFaceIndexX(ix,iy,iz) ] = 0.0;
+      ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = 0.0;
 
       ix=numberOfCellsPerAxisX+1;
-      uy[ getFaceIndexY(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uy[ getFaceIndexY(ix-1,iy,iz) ];
-      uz[ getFaceIndexZ(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uz[ getFaceIndexZ(ix-1,iy,iz) ];
+      uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uy[ getFacey_cell_WithHalo(ix-1,iy,iz) ];
+      uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uz[ getFacez_cell_WithHalo(ix-1,iy,iz) ];
     }
   }
 
   for (ix=0; ix<numberOfCellsPerAxisX+2; ix++) {
     for (iz=0; iz<numberOfCellsPerAxisZ+2; iz++) {
       iy=0;
-      uy[ getFaceIndexY(ix,iy,iz) ] = 0.0;
+      uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = 0.0;
       iy=1;
-      uy[ getFaceIndexY(ix,iy,iz) ] = 0.0;
+      uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = 0.0;
 
       iy=0;
-      ux[ getFaceIndexX(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * ux[ getFaceIndexX(ix,iy+1,iz) ];
-      uz[ getFaceIndexZ(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uz[ getFaceIndexZ(ix,iy+1,iz) ];
+      ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * ux[ getFacex_cell_WithHalo(ix,iy+1,iz) ];
+      uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uz[ getFacez_cell_WithHalo(ix,iy+1,iz) ];
 
       iy=numberOfCellsPerAxisY+2;
-      uy[ getFaceIndexY(ix,iy,iz) ] = 0.0;
+      uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = 0.0;
       iy=numberOfCellsPerAxisY+1;
-      uy[ getFaceIndexY(ix,iy,iz) ] = 0.0;
+      uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = 0.0;
 
       iy=numberOfCellsPerAxisY+1;
-      ux[ getFaceIndexX(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * ux[ getFaceIndexX(ix,iy-1,iz) ];
-      uz[ getFaceIndexZ(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uz[ getFaceIndexZ(ix,iy-1,iz) ];
+      ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * ux[ getFacex_cell_WithHalo(ix,iy-1,iz) ];
+      uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uz[ getFacez_cell_WithHalo(ix,iy-1,iz) ];
     }
   }
 
   for (ix=0; ix<numberOfCellsPerAxisX+2; ix++) {
     for (iy=0; iy<numberOfCellsPerAxisY+2; iy++) {
       iz=0;
-      uz[ getFaceIndexZ(ix,iy,iz) ] = 0.0;
+      uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = 0.0;
       iz=1;
-      uz[ getFaceIndexZ(ix,iy,iz) ] = 0.0;
+      uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = 0.0;
 
       iz=0;
-      ux[ getFaceIndexX(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * ux[ getFaceIndexX(ix,iy,iz+1) ];
-      uy[ getFaceIndexY(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uy[ getFaceIndexY(ix,iy,iz+1) ];
+      ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * ux[ getFacex_cell_WithHalo(ix,iy,iz+1) ];
+      uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uy[ getFacey_cell_WithHalo(ix,iy,iz+1) ];
 
       iz=numberOfCellsPerAxisZ+2;
-      uz[ getFaceIndexZ(ix,iy,iz) ] = 0.0;
+      uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = 0.0;
       iz=numberOfCellsPerAxisZ+1;
-      uz[ getFaceIndexZ(ix,iy,iz) ] = 0.0;
+      uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = 0.0;
 
       iz=numberOfCellsPerAxisZ+1;
-      ux[ getFaceIndexX(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * ux[ getFaceIndexX(ix,iy,iz-1) ];
-      uy[ getFaceIndexY(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uy[ getFaceIndexY(ix,iy,iz-1) ];
+      ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * ux[ getFacex_cell_WithHalo(ix,iy,iz-1) ];
+      uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = (UseNoSlip ? -1.0 : 1.0) * uy[ getFacey_cell_WithHalo(ix,iy,iz-1) ];
     }
   }
 
@@ -1024,19 +1058,19 @@ void setVelocityBoundaryConditions(double time) {
       const double inflow    = UseNoSlip ? inputProfileScaling * yDistance * (1.0-yDistance) * zDistance * (1.0-zDistance) : inputProfileScaling;
 
       ix=0;
-      ux[ getFaceIndexX(ix,iy,iz) ] = inflow;
-      uy[ getFaceIndexY(ix,iy,iz) ] = 0.0;
-      uz[ getFaceIndexZ(ix,iy,iz) ] = 0.0;
+      ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = inflow;
+      uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = 0.0;
+      uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = 0.0;
       ix=1;
-      ux[ getFaceIndexX(ix,iy,iz) ] = inflow;
-      uy[ getFaceIndexY(ix,iy,iz) ] = 0.0;
-      uz[ getFaceIndexZ(ix,iy,iz) ] = 0.0;
+      ux[ getFacex_cell_WithHalo(ix,iy,iz) ] = inflow;
+      uy[ getFacey_cell_WithHalo(ix,iy,iz) ] = 0.0;
+      uz[ getFacez_cell_WithHalo(ix,iy,iz) ] = 0.0;
 
       // outflow
-      ux[ getFaceIndexX(numberOfCellsPerAxisX+2,iy,iz) ] = ux[ getFaceIndexX(numberOfCellsPerAxisX,iy,iz) ];
-      ux[ getFaceIndexX(numberOfCellsPerAxisX+1,iy,iz) ] = ux[ getFaceIndexX(numberOfCellsPerAxisX,iy,iz) ];
-      uy[ getFaceIndexY(numberOfCellsPerAxisX+1,iy,iz) ] = uy[ getFaceIndexY(numberOfCellsPerAxisX+0,iy,iz) ];
-      uz[ getFaceIndexZ(numberOfCellsPerAxisX+1,iy,iz) ] = uz[ getFaceIndexZ(numberOfCellsPerAxisX+0,iy,iz) ];
+      ux[ getFacex_cell_WithHalo(numberOfCellsPerAxisX+2,iy,iz) ] = ux[ getFacex_cell_WithHalo(numberOfCellsPerAxisX,iy,iz) ];
+      ux[ getFacex_cell_WithHalo(numberOfCellsPerAxisX+1,iy,iz) ] = ux[ getFacex_cell_WithHalo(numberOfCellsPerAxisX,iy,iz) ];
+      uy[ getFacey_cell_WithHalo(numberOfCellsPerAxisX+1,iy,iz) ] = uy[ getFacey_cell_WithHalo(numberOfCellsPerAxisX+0,iy,iz) ];
+      uz[ getFacez_cell_WithHalo(numberOfCellsPerAxisX+1,iy,iz) ] = uz[ getFacez_cell_WithHalo(numberOfCellsPerAxisX+0,iy,iz) ];
     }
   }
 
@@ -1048,50 +1082,50 @@ void setVelocityBoundaryConditions(double time) {
   for (iy=0; iy<numberOfCellsPerAxisY+2; iy++) {
     for (iz=0; iz<numberOfCellsPerAxisZ+2; iz++) {
       ix=0;
-      Fx[ getFaceIndexX(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
+      Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
 
-      Fy[ getFaceIndexY(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ];
-      Fz[ getFaceIndexZ(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
-      //Fy[ getFaceIndex^(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
-      //Fz[ getFaceIndexZ(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ];
+      Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
+      Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
+      //Fy[ getFaceIndex^(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
+      //Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
 
       ix=1;
-      Fx[ getFaceIndexX(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
+      Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
 
       ix=numberOfCellsPerAxisX+1;
-      Fx[ getFaceIndexX(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
-      Fy[ getFaceIndexY(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ];
-      Fz[ getFaceIndexZ(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
-      //Fy[ getFaceIndexY(ix,iy,iz) ] = uz[ getFaceIndexY(ix,iy,iz) ];
-      //Fz[ getFaceIndexZ(ix,iy,iz) ] = uy[ getFaceIndexZ(ix,iy,iz) ];
+      Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
+      Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
+      Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
+      //Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = uz[ getFacey_cell_WithHalo(ix,iy,iz) ];
+      //Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = uy[ getFacez_cell_WithHalo(ix,iy,iz) ];
 
       ix=numberOfCellsPerAxisX+2;
-      Fx[ getFaceIndexX(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
+      Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
     }
   }
 
   for (ix=0; ix<numberOfCellsPerAxisX+2; ix++) {
     for (iz=0; iz<numberOfCellsPerAxisZ+2; iz++) {
       iy=0;
-      Fy[ getFaceIndexY(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ];
+      Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
 
-      Fx[ getFaceIndexX(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
-      Fz[ getFaceIndexZ(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
-      //Fx[ getFaceIndexX(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
-      //Fz[ getFaceIndexZ(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
+      Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
+      Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
+      //Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
+      //Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
       
       iy=1;
-      Fy[ getFaceIndexY(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ]
+      Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ]
                                           ;
       iy=numberOfCellsPerAxisY+1;
-      Fy[ getFaceIndexY(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ];
-      Fx[ getFaceIndexX(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
-      Fz[ getFaceIndexZ(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
-      //Fx[ getFaceIndexX(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
-      //Fz[ getFaceIndexZ(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
+      Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
+      Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
+      Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
+      //Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
+      //Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
 
       iy=numberOfCellsPerAxisY+2;
-      Fy[ getFaceIndexY(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ];
+      Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
     }
   }
 
@@ -1099,25 +1133,25 @@ void setVelocityBoundaryConditions(double time) {
   for (ix=0; ix<numberOfCellsPerAxisX+2; ix++) {
     for (iy=0; iy<numberOfCellsPerAxisY+2; iy++) {
       iz=0;
-      Fz[ getFaceIndexZ(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
+      Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
       
-      Fx[ getFaceIndexX(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
-      Fy[ getFaceIndexY(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ];
-      //Fx[ getFaceIndexX(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ];
-      //Fy[ getFaceIndexY(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
+      Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
+      Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
+      //Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
+      //Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
       
       iz=1;
-      Fz[ getFaceIndexZ(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
+      Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
 
       iz=numberOfCellsPerAxisZ+1;
-      Fz[ getFaceIndexZ(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
-      Fx[ getFaceIndexX(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
-      Fy[ getFaceIndexY(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ];
-      //Fx[ getFaceIndexX(ix,iy,iz) ] = uy[ getFaceIndexY(ix,iy,iz) ];
-      //Fy[ getFaceIndexY(ix,iy,iz) ] = ux[ getFaceIndexX(ix,iy,iz) ];
+      Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
+      Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
+      Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
+      //Fx[ getFacex_cell_WithHalo(ix,iy,iz) ] = uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
+      //Fy[ getFacey_cell_WithHalo(ix,iy,iz) ] = ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
 
       iz=numberOfCellsPerAxisZ+2;
-      Fz[ getFaceIndexZ(ix,iy,iz) ] = uz[ getFaceIndexZ(ix,iy,iz) ];
+      Fz[ getFacez_cell_WithHalo(ix,iy,iz) ] = uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
     }
   }
 
@@ -1129,46 +1163,46 @@ void setVelocityBoundaryConditions(double time) {
       for (int ix=2; ix<numberOfCellsPerAxisX+3-2; ix++) {
         if (cellIsInside[getCellIndex(ix,iy,iz)]) {
           if ( !cellIsInside[getCellIndex(ix-1,iy,iz)] ) { // left neighbour
-            ux[ getFaceIndexX(ix,iy,iz) ]   = 0.0;
-            ux[ getFaceIndexX(ix-1,iy,iz) ] = 0.0;
-            Fx[ getFaceIndexX(ix,iy,iz) ]   = 0.0;
-            uy[ getFaceIndexY(ix-1,iy,iz) ] = -uy[ getFaceIndexY(ix,iy,iz) ];
-            uz[ getFaceIndexZ(ix-1,iy,iz) ] = -uz[ getFaceIndexZ(ix,iy,iz) ];
+            ux[ getFacex_cell_WithHalo(ix,iy,iz) ]   = 0.0;
+            ux[ getFacex_cell_WithHalo(ix-1,iy,iz) ] = 0.0;
+            Fx[ getFacex_cell_WithHalo(ix,iy,iz) ]   = 0.0;
+            uy[ getFacey_cell_WithHalo(ix-1,iy,iz) ] = -uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
+            uz[ getFacez_cell_WithHalo(ix-1,iy,iz) ] = -uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
           }
           if ( !cellIsInside[getCellIndex(ix+1,iy,iz)] ) { // right neighbour
-            ux[ getFaceIndexX(ix+1,iy,iz) ] = 0.0;
-            ux[ getFaceIndexX(ix+2,iy,iz) ] = 0.0;
-            Fx[ getFaceIndexX(ix+1,iy,iz) ] = 0.0;
-            uy[ getFaceIndexY(ix+1,iy,iz) ] = -uy[ getFaceIndexY(ix,iy,iz) ];
-            uz[ getFaceIndexZ(ix+1,iy,iz) ] = -uz[ getFaceIndexZ(ix,iy,iz) ];
+            ux[ getFacex_cell_WithHalo(ix+1,iy,iz) ] = 0.0;
+            ux[ getFacex_cell_WithHalo(ix+2,iy,iz) ] = 0.0;
+            Fx[ getFacex_cell_WithHalo(ix+1,iy,iz) ] = 0.0;
+            uy[ getFacey_cell_WithHalo(ix+1,iy,iz) ] = -uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
+            uz[ getFacez_cell_WithHalo(ix+1,iy,iz) ] = -uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
           }
           if ( !cellIsInside[getCellIndex(ix,iy-1,iz)] ) { // bottom neighbour
-            uy[ getFaceIndexY(ix,iy,iz) ]   = 0.0;
-            uy[ getFaceIndexY(ix,iy-1,iz) ] = 0.0;
-            Fy[ getFaceIndexY(ix,iy,iz) ]   = 0.0;
-            ux[ getFaceIndexX(ix,iy-1,iz) ] = -ux[ getFaceIndexX(ix,iy,iz) ];
-            uz[ getFaceIndexZ(ix,iy-1,iz) ] = -uz[ getFaceIndexZ(ix,iy,iz) ];
+            uy[ getFacey_cell_WithHalo(ix,iy,iz) ]   = 0.0;
+            uy[ getFacey_cell_WithHalo(ix,iy-1,iz) ] = 0.0;
+            Fy[ getFacey_cell_WithHalo(ix,iy,iz) ]   = 0.0;
+            ux[ getFacex_cell_WithHalo(ix,iy-1,iz) ] = -ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
+            uz[ getFacez_cell_WithHalo(ix,iy-1,iz) ] = -uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
           }
           if ( !cellIsInside[getCellIndex(ix,iy+1,iz)] ) { // top neighbour
-            uy[ getFaceIndexY(ix,iy+1,iz) ] = 0.0;
-            uy[ getFaceIndexY(ix,iy+2,iz) ] = 0.0;
-            Fy[ getFaceIndexY(ix,iy+1,iz) ] = 0.0;
-            ux[ getFaceIndexX(ix,iy+1,iz) ] = -ux[ getFaceIndexX(ix,iy,iz) ];
-            uz[ getFaceIndexZ(ix,iy+1,iz) ] = -uz[ getFaceIndexZ(ix,iy,iz) ];
+            uy[ getFacey_cell_WithHalo(ix,iy+1,iz) ] = 0.0;
+            uy[ getFacey_cell_WithHalo(ix,iy+2,iz) ] = 0.0;
+            Fy[ getFacey_cell_WithHalo(ix,iy+1,iz) ] = 0.0;
+            ux[ getFacex_cell_WithHalo(ix,iy+1,iz) ] = -ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
+            uz[ getFacez_cell_WithHalo(ix,iy+1,iz) ] = -uz[ getFacez_cell_WithHalo(ix,iy,iz) ];
           }
           if ( !cellIsInside[getCellIndex(ix,iy,iz-1)] ) { // front neighbour
-            uz[ getFaceIndexZ(ix,iy,iz) ]   = 0.0;
-            uz[ getFaceIndexZ(ix,iy,iz-1) ] = 0.0;
-            Fz[ getFaceIndexZ(ix,iy,iz) ]   = 0.0;
-            ux[ getFaceIndexX(ix,iy,iz-1) ] = -ux[ getFaceIndexX(ix,iy,iz) ];
-            uy[ getFaceIndexY(ix,iy,iz-1) ] = -uy[ getFaceIndexY(ix,iy,iz) ];
+            uz[ getFacez_cell_WithHalo(ix,iy,iz) ]   = 0.0;
+            uz[ getFacez_cell_WithHalo(ix,iy,iz-1) ] = 0.0;
+            Fz[ getFacez_cell_WithHalo(ix,iy,iz) ]   = 0.0;
+            ux[ getFacex_cell_WithHalo(ix,iy,iz-1) ] = -ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
+            uy[ getFacey_cell_WithHalo(ix,iy,iz-1) ] = -uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
           }
           if ( !cellIsInside[getCellIndex(ix,iy,iz+1)] ) { // right neighbour
-            uz[ getFaceIndexZ(ix,iy,iz+1) ] = 0.0;
-            uz[ getFaceIndexZ(ix,iy,iz+2) ] = 0.0;
-            Fz[ getFaceIndexZ(ix,iy,iz+1) ] = 0.0;
-            ux[ getFaceIndexX(ix,iy,iz+1) ] = -ux[ getFaceIndexX(ix,iy,iz) ];
-            uy[ getFaceIndexY(ix,iy,iz+1) ] = -uy[ getFaceIndexY(ix,iy,iz) ];
+            uz[ getFacez_cell_WithHalo(ix,iy,iz+1) ] = 0.0;
+            uz[ getFacez_cell_WithHalo(ix,iy,iz+2) ] = 0.0;
+            Fz[ getFacez_cell_WithHalo(ix,iy,iz+1) ] = 0.0;
+            ux[ getFacex_cell_WithHalo(ix,iy,iz+1) ] = -ux[ getFacex_cell_WithHalo(ix,iy,iz) ];
+            uy[ getFacey_cell_WithHalo(ix,iy,iz+1) ] = -uy[ getFacey_cell_WithHalo(ix,iy,iz) ];
           }
         }
       }
