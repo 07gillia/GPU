@@ -747,7 +747,6 @@ int computeP() {
     firstResidual         = firstResidual==0 ? globalResidual : firstResidual;
     iterations++;
 
-    break;
   }
 
   std::cout << "iterations n=" << iterations
