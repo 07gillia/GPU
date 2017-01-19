@@ -1,88 +1,3 @@
-/*
-
-
-=======================================================================
-This example follows the book from Griebel et al on Computational Fluid
-Dynamics. It realises a test setup from TUM's CFD lab.
-
-(C) 2016 Tobias Weinzierl
-=======================================================================
-
-
-
-
-
-Getting started with the Karman vortex strees
-
-(1) Compile the code with
-
-g++ -O3 karman.cpp -o karman
-
-(2) Try a dry run
-
-./karman
-
-You should see a usage instruction. Lets start with
-
-(3)
-
-./karman 10 0.001 800
-
-It will run for a while (up to several hours - depends on your computer). Please note that you can work with
-finer meshes (increase first parameter) for all your development but then you miss some of the interesting physics.
-For reasonably accurate results, you should use 20 instead of 10. It then however can happen that your code runs
-for more than a day. So at least decrease the final time (see constant below) for any speed tests.
-
-Once you've completed this example, you might want to try:
-
-./karman 10 0.001 1600
-./karman 10 0.001 10000
-./karman 15 0.001 1600
-./karman 15 0.001 10000
-./karman 20 0.001 1600
-./karman 20 0.001 10000
-
-The last parameter is the Reynolds number. It determines how viscous your fluid is. Very high Reynolds numbers
-make the fluid resemble gas, low Reynolds numbers make it act like honey.
-
-
-(4) Open Paraview
-
-- Select all the vtk files written and press Apply. You should see the bounding box of the setup, i.e. a cube.
-- Select first the vtk files in the left menu and then Filters/Alphabetical/Stream Tracer and press Apply.
-- Press the Play button. Already in the first time snapshot you should see how the fluid flows through the
-  domain (the lines you see are streamlines, i.e. they visualise the flow direction)
-- If you want to see the obstacle: select the output files in the left window. Select Filter/Threshold. In the
-  bottom left window there's a pulldown menu Scalars where you have to select obstacle. Filter values between
-  0 and 0.1 and press apply. The idea is that each cell has a number: 0 means obstacle, 1 fluid cell. So if you
-  filter out all the 1 guys, then you end up with the obstacle.
-- If you want to get an impression of the pressure distribution, select the output files in the left window.
-  Apply the filter Slice. By default, its x normal vector is set to 1. For our setup, it is better to make the
-  z component equal one. Press apply and ensure that you have selected pressure for the output. When you run the
-  code it might become necessary to press the button "Rescale to Data Range" in the toolbar for the pressure as
-  the pressure increases over time.
-- Also very convenient to study the flow field is the glyph mode. Select the input data to the left and apply the
-  filter Glyph. It puts little arrows into the domain that visualise the flow direction and its magnitude. By
-  default, these glyphs are too big. Use the Properties window to the left and reduce the Scale Factor to 0.02,
-  e.g.
-- For Scientific Computing: If you have implemented another equation on top of the flow field (should be called
-  ink here here) to get an idea what the solution looks like. Alternatively, you can use threshold or the contour
-  line filter.
-
-Paraview is pretty powerful (though sometimes not very comfortable to use). However, you find plenty of tutorials
-on YouTube, e.g.
-
-
-
-(5) Start programming
-
-- There is already a field ink in the code that you can use to represent your chemical substance.
-- It has the dimension numberOfCellsPerAxis+1 x numberOfCellsPerAxis+1 x numberOfCellsPerAxis+1.
-- The ink is already visualised (though it is zero right now), so you have a visual debugging tool at hands.
-- I suggest to start with a pure Poisson equation, i.e. to neglect the impact of ux, uy and uz, and then to add those terms to the equation.
-- Do all your realisation in updateInk() please. You can also set the boundary conditions there.
-
-*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -90,7 +5,6 @@ on YouTube, e.g.
 #include <sstream>
 #include <fstream>
 #include <cmath>
-
 
 /**
  * Number of cell we have per axis
@@ -114,6 +28,16 @@ double* Fy;
 double* Fz;
 
 /**
+ * variables to store the number of blocks total/in each axis
+ * also stores the "truth tables" for the blocks, if they can be vectorised or not
+ */
+int blockCountX;
+int blockCountY;
+int blockCountZ;
+int blockCountTotal;
+bool* objectInBlock;
+
+/**
  * Pressure in the cell
  */
 double* p;
@@ -123,7 +47,6 @@ double* rhs;
  * A marker that is required for the Scientific Computing module.
  */
 double* ink;
-
 
 /**
  * Is cell inside domain
@@ -140,11 +63,12 @@ const int IterationsBeforeTimeStepSizeIsAltered  = 64;
 const double ChangeOfTimeStepSize                = 0.1;
 const double PPESolverThreshold                  = 1e-6;
 
-
 /**
  * Switch on to have a couple of security checks
  */
-//#define CheckVariableValues
+#define CheckVariableValues
+#define BLOCKDIMENSION 4
+
 
 
 /**
@@ -167,6 +91,7 @@ void assertion( bool condition, int line ) {
  * Maps the three coordinates onto one cell index.
  */
 int getCellIndex(int ix, int iy, int iz) {
+  //printf("%i : %i : %i : %i : %i : %i\n", ix,iy,iz,(numberOfCellsPerAxisX+2),(numberOfCellsPerAxisY+2),(numberOfCellsPerAxisZ+2));
   assertion(ix>=0,__LINE__);
   assertion(ix<numberOfCellsPerAxisX+2,__LINE__);
   assertion(iy>=0,__LINE__);
@@ -190,7 +115,6 @@ int getVertexIndex(int ix, int iy, int iz) {
   return ix+iy*(numberOfCellsPerAxisX+1)+iz*(numberOfCellsPerAxisX+1)*(numberOfCellsPerAxisY+1);
 }
 
-
 /**
  * Gives you the face with the number ix,iy,iz.
  *
@@ -206,7 +130,6 @@ int getFaceIndexX(int ix, int iy, int iz) {
   return ix+iy*(numberOfCellsPerAxisX+3)+iz*(numberOfCellsPerAxisX+3)*(numberOfCellsPerAxisY+2);
 }
 
-
 int getFaceIndexY(int ix, int iy, int iz) {
   assertion(ix>=0,__LINE__);
   assertion(ix<numberOfCellsPerAxisX+2,__LINE__);
@@ -216,7 +139,6 @@ int getFaceIndexY(int ix, int iy, int iz) {
   assertion(iz<numberOfCellsPerAxisZ+2,__LINE__);
   return ix+iy*(numberOfCellsPerAxisX+2)+iz*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
 }
-
 
 int getFaceIndexZ(int ix, int iy, int iz) {
   assertion(ix>=0,__LINE__);
@@ -228,7 +150,6 @@ int getFaceIndexZ(int ix, int iy, int iz) {
   return ix+iy*(numberOfCellsPerAxisX+2)+iz*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
 }
 
-
 /**
  * We use always numberOfCellsPerAxisX=numberOfCellsPerAxisY and we make Z 5
  * times bigger, i.e. we always work with cubes. We also assume that the whole
@@ -237,7 +158,6 @@ int getFaceIndexZ(int ix, int iy, int iz) {
 double getH() {
   return 1.0/static_cast<double>(numberOfCellsPerAxisY);
 }
-
 
 /**
  * There are two types of errors/bugs that really hunt us in these codes: We
@@ -297,7 +217,6 @@ void validateThatEntriesAreBounded(const std::string&  callingRoutine) {
   }
   #endif
 }
-
 
 /**
  * Plot a vtk file. This function probably never has to be changed when you do
@@ -423,7 +342,6 @@ void plotVTKFile() {
   vtkFileCounter++;
 }
 
-
 /**
  * Computes a helper velocity. See book of Griebel for details.
  */
@@ -528,7 +446,6 @@ void computeF() {
   validateThatEntriesAreBounded( "computeF" );
 }
 
-
 /**
  * Compute the right-hand side. This basically means how much a flow would
  * violate the incompressibility if there were no pressure.
@@ -549,7 +466,6 @@ void computeRhs() {
     }
   }
 }
-
 
 /**
  * Set boundary conditions for pressure. The values of the pressure at the
@@ -622,7 +538,6 @@ void setPressureBoundaryConditions() {
   }
 }
 
-
 /**
  * Determine the new pressure. The operation depends on properly set pressure
  * boundary conditions. See setPressureBoundaryConditions().
@@ -654,30 +569,102 @@ int computeP() {
 
     previousGlobalResidual = globalResidual;
     globalResidual         = 0.0;
-    for (int iz=1; iz<numberOfCellsPerAxisZ+1; iz++) {
-      for (int iy=1; iy<numberOfCellsPerAxisY+1; iy++) {
-        for (int ix=1; ix<numberOfCellsPerAxisX+1; ix++) {
-          if ( cellIsInside[getCellIndex(ix,iy,iz)] ) {
-            double residual = rhs[ getCellIndex(ix,iy,iz) ] +
-              1.0/getH()/getH()*
-              (
-                - 1.0 * p[ getCellIndex(ix-1,iy,iz) ]
-                - 1.0 * p[ getCellIndex(ix+1,iy,iz) ]
-                - 1.0 * p[ getCellIndex(ix,iy-1,iz) ]
-                - 1.0 * p[ getCellIndex(ix,iy+1,iz) ]
-                - 1.0 * p[ getCellIndex(ix,iy,iz-1) ]
-                - 1.0 * p[ getCellIndex(ix,iy,iz+1) ]
-                + 6.0 * p[ getCellIndex(ix,iy,iz) ]
-              );
-            globalResidual              += residual * residual;
-            p[ getCellIndex(ix,iy,iz) ] += -omega * residual / 6.0 * getH() * getH();
+
+    int blockCounter = 0;
+    // counter to iterate through the index in the bool array
+    int correctedX;
+    int correctedY;
+    int correctedZ;
+
+    for (int blockIndexX = 0; blockIndexX < blockCountX; ++blockIndexX){
+      for (int blockIndexY = 0; blockIndexY < blockCountY; ++blockIndexY){
+        for (int blockIndexZ = 0; blockIndexZ < blockCountZ; ++blockIndexZ){
+          // iterate through every block index in the simulation
+
+          if (!objectInBlock[blockCounter]){
+            // this means that there is no object in the block meaning it can be SIMD
+
+            //printf("SIMD\n");
+
+            for (int xCell=0; xCell<BLOCKDIMENSION; xCell++) {
+              for (int yCell=0; yCell<BLOCKDIMENSION; yCell++) {
+                //#pragma simd
+                for (int zCell=0; zCell<BLOCKDIMENSION; zCell++) {
+                  // iterate through each cell in the block
+
+                  correctedX = (blockIndexX * BLOCKDIMENSION) + xCell + 1;
+                  correctedY = (blockIndexY * BLOCKDIMENSION) + yCell + 1;
+                  correctedZ = (blockIndexZ * BLOCKDIMENSION) + zCell + 1;
+                  // the actual index values of the cells
+                  /*
+                  printf("---\n");
+                  printf("%i : %i : %i\n", correctedX,correctedY,correctedZ);
+                  printf("---\n");
+                  */
+                  double residual = rhs[ getCellIndex(correctedX,correctedY,correctedZ) ] +
+                    1.0/getH()/getH()*
+                    (
+                      - 1.0 * p[ getCellIndex(correctedX-1,correctedY,correctedZ) ]
+                      - 1.0 * p[ getCellIndex(correctedX+1,correctedY,correctedZ) ]
+                      - 1.0 * p[ getCellIndex(correctedX,correctedY-1,correctedZ) ]
+                      - 1.0 * p[ getCellIndex(correctedX,correctedY+1,correctedZ) ]
+                      - 1.0 * p[ getCellIndex(correctedX,correctedY,correctedZ-1) ]
+                      - 1.0 * p[ getCellIndex(correctedX,correctedY,correctedZ+1) ]
+                      + 6.0 * p[ getCellIndex(correctedX,correctedY,correctedZ) ]
+                    );
+                  globalResidual              += residual * residual;
+                  p[ getCellIndex(correctedX,correctedY,correctedZ) ] += -omega * residual / 6.0 * getH() * getH();
+                }
+              }
+            }
           }
+          else{
+            // this means that there is an object in the block meaning that it cannot be SIMD
+
+            //printf("NOT SIMD\n");
+
+            for (int xCell=0; xCell<BLOCKDIMENSION; xCell++) {
+              for (int yCell=0; yCell<BLOCKDIMENSION; yCell++) {
+                for (int zCell=0; zCell<BLOCKDIMENSION; zCell++) {
+                  // iterate through each cell in the block
+
+                  correctedX = (blockIndexX * BLOCKDIMENSION) + xCell + 1;
+                  correctedY = (blockIndexY * BLOCKDIMENSION) + yCell + 1;
+                  correctedZ = (blockIndexZ * BLOCKDIMENSION) + zCell + 1;
+                  // the actual index values of the cells
+                  /*
+                  printf("---\n");
+                  printf("%i : %i : %i\n", correctedX,correctedY,correctedZ);
+                  printf("---\n");
+                  */
+                  if ( cellIsInside[getCellIndex(correctedX,correctedY,correctedZ)] ) {
+                    double residual = rhs[ getCellIndex(correctedX,correctedY,correctedZ) ] +
+                      1.0/getH()/getH()*
+                      (
+                        - 1.0 * p[ getCellIndex(correctedX-1,correctedY,correctedZ) ]
+                        - 1.0 * p[ getCellIndex(correctedX+1,correctedY,correctedZ) ]
+                        - 1.0 * p[ getCellIndex(correctedX,correctedY-1,correctedZ) ]
+                        - 1.0 * p[ getCellIndex(correctedX,correctedY+1,correctedZ) ]
+                        - 1.0 * p[ getCellIndex(correctedX,correctedY,correctedZ-1) ]
+                        - 1.0 * p[ getCellIndex(correctedX,correctedY,correctedZ+1) ]
+                        + 6.0 * p[ getCellIndex(correctedX,correctedY,correctedZ) ]
+                      );
+                    globalResidual              += residual * residual;
+                    p[ getCellIndex(correctedX,correctedY,correctedZ) ] += -omega * residual / 6.0 * getH() * getH();
+                  }
+                }
+              }
+            }
+          }
+          blockCounter += 1;
         }
       }
     }
+
     globalResidual        = std::sqrt(globalResidual);
     firstResidual         = firstResidual==0 ? globalResidual : firstResidual;
     iterations++;
+  
   }
 
   std::cout << "iterations n=" << iterations
@@ -688,14 +675,11 @@ int computeP() {
   return iterations;
 }
 
-
 /**
  * @todo Your job if you attend the Scientific Computing submodule. Otherwise empty.
  */
 void updateInk() {
 }
-
-
 
 /**
  * Once we have F and a valid pressure p, we may update the velocities.
@@ -726,7 +710,6 @@ void setNewVelocities() {
   }
 }
 
-
 /**
  * Setup our scenario, i.e. initialise all the big arrays and set the
  * right boundary conditions. This is something you might want to change in
@@ -738,6 +721,14 @@ void setupScenario() {
   const int numberOfFacesX = (numberOfCellsPerAxisX+3) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
   const int numberOfFacesY = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+3) * (numberOfCellsPerAxisZ+2);
   const int numberOfFacesZ = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+3);
+
+  blockCountX = numberOfCellsPerAxisX/BLOCKDIMENSION;
+  blockCountY = numberOfCellsPerAxisY/BLOCKDIMENSION;
+  blockCountZ = numberOfCellsPerAxisZ/BLOCKDIMENSION;
+  blockCountTotal = blockCountX * blockCountY * blockCountZ;
+
+  //printf("%i : %i : %i : %i\n", blockCountX, blockCountY, blockCountZ, blockCountTotal);
+  // the number of blocks at this point is correct
 
   ux  = 0;
   uy  = 0;
@@ -756,12 +747,15 @@ void setupScenario() {
   Fy  = new (std::nothrow) double[numberOfFacesY];
   Fz  = new (std::nothrow) double[numberOfFacesZ];
 
+  objectInBlock = new (std::nothrow) bool[blockCountTotal];
+
   p   = new (std::nothrow) double[numberOfCells];
   rhs = new (std::nothrow) double[numberOfCells];
 
   ink = new (std::nothrow) double[(numberOfCellsPerAxisX+1) * (numberOfCellsPerAxisY+1) * (numberOfCellsPerAxisZ+1)];
 
   cellIsInside = new (std::nothrow) bool[numberOfCells];
+  // an array with an index for each block that indicates if the block contains any cells that are in the object
 
   if (
     ux  == 0 ||
@@ -799,6 +793,9 @@ void setupScenario() {
     uz[i]=0;
     Fz[i]=0;
   }
+  for (int i = 0; i < blockCountTotal; ++i){
+    objectInBlock[i] = false;
+  }
 
 
   //
@@ -820,9 +817,39 @@ void setupScenario() {
     cellIsInside[ getCellIndex(xOffsetOfObstacle+sizeOfObstacle+1,  2*sizeOfObstacle+2,iz) ] = false;
   }
 
+  int blockCounter = 0;
+  // a counter to hold the index in the truth table for each block
+
+  for (int blockIndexX = 0; blockIndexX < blockCountX; ++blockIndexX){
+    for (int blockIndexY = 0; blockIndexY < blockCountY; ++blockIndexY){
+      for (int blockIndexZ = 0; blockIndexZ < blockCountZ; ++blockIndexZ){
+        // iterate through every block index in the simulation
+
+        for (int xCell = 0; xCell < BLOCKDIMENSION; ++xCell){
+          for (int yCell = 0; yCell < BLOCKDIMENSION; ++yCell){
+            for (int zCell = 0; zCell < BLOCKDIMENSION; ++zCell){
+              // iterate through each cell in the block
+
+              if(cellIsInside[ getCellIndex( ((blockIndexX * BLOCKDIMENSION) + xCell + 1), ((blockIndexY * BLOCKDIMENSION) + yCell + 1), ((blockIndexZ * BLOCKDIMENSION) + zCell + 1))] == false){
+                // the cell is inside the object meaning that the current block cannot be SIMD
+                objectInBlock[blockCounter] = true;
+              }
+            }
+          }
+        }
+        blockCounter += 1;
+        // increment the block counter
+      }
+    }
+  }
+  /*
+  for (int i = 0; i < blockCountTotal; ++i){
+    printf("%d\n", objectInBlock[i]);
+  }
+  */
+
   validateThatEntriesAreBounded("setupScenario()");
 }
-
 
 /**
  * Clean up the system
@@ -849,7 +876,6 @@ void freeDataStructures() {
   rhs = 0;
   ink = 0;
 }
-
 
 /**
  * - Handle all the velocities at the domain boundaries. We either
@@ -1107,9 +1133,6 @@ void setVelocityBoundaryConditions(double time) {
 
   validateThatEntriesAreBounded("setVelocityBoundaryConditions(double)[out]");
 }
-
-
-
 
 int main (int argc, char *argv[]) {
   if (argc!=4) {

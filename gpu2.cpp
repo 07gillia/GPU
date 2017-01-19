@@ -6,7 +6,7 @@
 #include <fstream>
 #include <cmath>
 
-#define BLOCKDIMENTION 4
+#define BLOCKDIMENSION 4
 
 /**
  * Number of cell we have per axis
@@ -33,6 +33,10 @@ double* Fz;
  * Array to store if the block contains a cell that is in the object.
  */
 bool* objectInBlock;
+int numberOfBlocksX;
+int numberOfBlocksY;
+int numberOfBlocksZ;
+int numberOfBlocks;
 
 /**
  * Pressure in the cell
@@ -89,6 +93,7 @@ void assertion( bool condition, int line ) {
  * This is converting from the raw version to normal one
  */
 int getCellIndex(int ix, int iy, int iz) {
+  //printf("%i : %i : %i\n", ix,iy,iz);
   assertion(ix>=0,__LINE__);
   assertion(ix<numberOfCellsPerAxisX+2,__LINE__);
   assertion(iy>=0,__LINE__);
@@ -124,7 +129,7 @@ int getBlockIndexFromCellCoordinates(int ix, int iy, int iz) {
   assertion(iy<(numberOfCellsPerAxisY+2),__LINE__);
   assertion(iz>=0,__LINE__);
   assertion(iz<(numberOfCellsPerAxisZ+2),__LINE__);
-  return (ix-1)/BLOCKDIMENTION+(iy-1)/BLOCKDIMENTION*(numberOfCellsPerAxisX+2)+(iz-1)/BLOCKDIMENTION*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
+  return (ix-1)/BLOCKDIMENSION+(iy-1)/BLOCKDIMENSION*(numberOfCellsPerAxisX+2)+(iz-1)/BLOCKDIMENSION*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
 }
 
 /**
@@ -134,12 +139,12 @@ int getBlockIndexFromCellCoordinates(int ix, int iy, int iz) {
  */
 int getBlockIndexFromBlockCoordinates(int ix, int iy, int iz) {
   assertion(ix>=0,__LINE__);
-  assertion(ix<(numberOfCellsPerAxisX+2)/BLOCKDIMENTION,__LINE__);
+  assertion(ix<(numberOfBlocksX+2),__LINE__);
   assertion(iy>=0,__LINE__);
-  assertion(iy<(numberOfCellsPerAxisY+2)/BLOCKDIMENTION,__LINE__);
+  assertion(iy<(numberOfBlocksY+2),__LINE__);
   assertion(iz>=0,__LINE__);
-  assertion(iz<(numberOfCellsPerAxisZ+2)/BLOCKDIMENTION,__LINE__);
-  return (ix/BLOCKDIMENTION)+(iy/BLOCKDIMENTION)*(numberOfCellsPerAxisX+2)+(iz/BLOCKDIMENTION)*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
+  assertion(iz<(numberOfBlocksZ+2),__LINE__);
+  return (ix)+(iy)*(numberOfBlocksX+2)+(iz)*(numberOfBlocksX+2)*(numberOfBlocksY+2);
 }
 
 /**
@@ -645,10 +650,14 @@ int computeP() {
       }
     }
     */
-    
-    const int numberOfBlocksX = (numberOfCellsPerAxisX/BLOCKDIMENTION);
-    const int numberOfBlocksY = (numberOfCellsPerAxisY/BLOCKDIMENTION);
-    const int numberOfBlocksZ = (numberOfCellsPerAxisZ/BLOCKDIMENTION);
+
+    //printf("%i\n", numberOfBlocks);
+    /*
+    for (int i = 0; i < numberOfBlocks; ++i){
+      printf("%d", objectInBlock[i]);
+    }
+    printf("\n");
+    */
 
     /*
     printf("-------------\n");
@@ -661,19 +670,24 @@ int computeP() {
       for (int y_Block_NoHalo = 0; y_Block_NoHalo < numberOfBlocksY; ++y_Block_NoHalo){
         for (int z_Block_NoHalo = 0; z_Block_NoHalo < numberOfBlocksZ; ++z_Block_NoHalo){
           // iterate through every block
-
-          // !objectInBlock[getBlockIndexFromBlockCoordinates(x_Block_NoHalo,y_Block_NoHalo,z_Block_NoHalo)]
-
-          if (false){
+          /*
+          printf("%i\n", x_Block_NoHalo);
+          printf("%i\n", y_Block_NoHalo);
+          printf("%i\n", z_Block_NoHalo);
+          printf("%d\n", !objectInBlock[getBlockIndexFromBlockCoordinates(x_Block_NoHalo,y_Block_NoHalo,z_Block_NoHalo)]);
+          */
+          if (!objectInBlock[getBlockIndexFromBlockCoordinates(x_Block_NoHalo,y_Block_NoHalo,z_Block_NoHalo)]){
             // this means that it is just fluid meaning that it can be SIMD
 
-            for (int iz = 0; iz < BLOCKDIMENTION; ++iz){
-              for (int iy = 0; iy < BLOCKDIMENTION; ++iy){
-                for (int ix = 0; ix < BLOCKDIMENTION; ++ix){
+            //printf("To be SIMD\n");
+
+            for (int iz = 0; iz < BLOCKDIMENSION; ++iz){
+              for (int iy = 0; iy < BLOCKDIMENSION; ++iy){
+                for (int ix = 0; ix < BLOCKDIMENSION; ++ix){
                   // iterate through all indexes in the block
-                  int x_cell_WithHalo = x_Block_NoHalo * BLOCKDIMENTION + ix;
-                  int y_cell_WithHalo = y_Block_NoHalo * BLOCKDIMENTION + iy;
-                  int z_cell_WithHalo = z_Block_NoHalo * BLOCKDIMENTION + iz;
+                  int x_cell_WithHalo = x_Block_NoHalo * BLOCKDIMENSION + ix;
+                  int y_cell_WithHalo = y_Block_NoHalo * BLOCKDIMENSION + iy;
+                  int z_cell_WithHalo = z_Block_NoHalo * BLOCKDIMENSION + iz;
                   // the index of current
 
                   if ( cellIsInside[getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo)] ) {
@@ -698,27 +712,28 @@ int computeP() {
           else{
             // this means that it is a mixture of fluid and object this cannot be SIMD
 
-            for (int ix = 0; ix < BLOCKDIMENTION; ++ix){
-              for (int iy = 0; iy < BLOCKDIMENTION; ++iy){
-                for (int iz = 0; iz < BLOCKDIMENTION; ++iz){
+            printf("Not to be SIMD\n");
+
+            for (int ix = 0; ix < BLOCKDIMENSION; ++ix){
+              for (int iy = 0; iy < BLOCKDIMENSION; ++iy){
+                for (int iz = 0; iz < BLOCKDIMENSION; ++iz){
                   // iterate through all indexes in the block
-                  int x_cell_WithHalo = (x_Block_NoHalo) * BLOCKDIMENTION + ix + 1;
-                  int y_cell_WithHalo = (y_Block_NoHalo) * BLOCKDIMENTION + iy + 1;
-                  int z_cell_WithHalo = (z_Block_NoHalo) * BLOCKDIMENTION + iz + 1;
+                  int x_cell_WithHalo = (x_Block_NoHalo) * BLOCKDIMENSION + ix + 2;
+                  int y_cell_WithHalo = (y_Block_NoHalo) * BLOCKDIMENSION + iy + 2;
+                  int z_cell_WithHalo = (z_Block_NoHalo) * BLOCKDIMENSION + iz + 2;
                   // the index of current
                   /*
-                  if (z_cell_WithHalo <= numberOfCellsPerAxisZ and y_cell_WithHalo <= numberOfCellsPerAxisY and x_cell_WithHalo <= numberOfCellsPerAxisX)
-                  {
-                    printf("------\n");
-                    printf("%i\n", z_cell_WithHalo);
-                    printf("%i\n", y_cell_WithHalo);
-                    printf("%i\n", x_cell_WithHalo);
-                    printf("------\n");
-                  }
+                  printf("------\n");
+                  printf("%i\n", iz);
+                  printf("%i\n", iy);
+                  printf("%i\n", ix);
+                  printf("%i\n", z_cell_WithHalo);
+                  printf("%i\n", y_cell_WithHalo);
+                  printf("%i\n", x_cell_WithHalo);
+                  printf("------\n");
                   */
-
-                  if ( cellIsInside[getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo)] ) {
-                    double residual = rhs[ getCellIndex(x_cell_WithHalo,y_cell_WithHalo,z_cell_WithHalo) ] +
+                  if ( cellIsInside[getCellIndex(x_cell_WithHalo, y_cell_WithHalo, z_cell_WithHalo)] ) {
+                    double residual = rhs[ getCellIndex(x_cell_WithHalo, y_cell_WithHalo, z_cell_WithHalo) ] +
                       1.0/getH()/getH()*
                       (
                         - 1.0 * p[ getCellIndex(x_cell_WithHalo-1,y_cell_WithHalo,z_cell_WithHalo) ]
@@ -804,10 +819,10 @@ void setNewVelocities() {
  */
 void setupScenario() {
   const int numberOfCells = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
-  const int numberOfBlocks = (numberOfCellsPerAxisX/BLOCKDIMENTION) * (numberOfCellsPerAxisY/BLOCKDIMENTION) * (numberOfCellsPerAxisZ/BLOCKDIMENTION);
-  const int numberOfBlocksX = (numberOfCellsPerAxisX/BLOCKDIMENTION);
-  const int numberOfBlocksY = (numberOfCellsPerAxisY/BLOCKDIMENTION);
-  const int numberOfBlocksZ = (numberOfCellsPerAxisZ/BLOCKDIMENTION);
+  numberOfBlocksX = (numberOfCellsPerAxisX/BLOCKDIMENSION);
+  numberOfBlocksY = (numberOfCellsPerAxisY/BLOCKDIMENSION);
+  numberOfBlocksZ = (numberOfCellsPerAxisZ/BLOCKDIMENSION);
+  numberOfBlocks = (numberOfBlocksX) * (numberOfBlocksY) * (numberOfBlocksZ);
 
   const int numberOfFacesX = (numberOfCellsPerAxisX+3) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
   const int numberOfFacesY = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+3) * (numberOfCellsPerAxisZ+2);
@@ -831,7 +846,7 @@ void setupScenario() {
   Fy  = new (std::nothrow) double[numberOfFacesY];
   Fz  = new (std::nothrow) double[numberOfFacesZ];
 
-  objectInBlock = new (std::nothrow) bool[numberOfBlocksX];
+  objectInBlock = new (std::nothrow) bool[numberOfBlocks];
 
   p   = new (std::nothrow) double[numberOfCells];
   rhs = new (std::nothrow) double[numberOfCells];
@@ -900,28 +915,32 @@ void setupScenario() {
     cellIsInside[ getCellIndex(xOffsetOfObstacle+sizeOfObstacle+1,  2*sizeOfObstacle+2,iz) ] = false;
   }
 
-  int blockX;
-  int blockY;
-  int blockZ;
+  int blockX_cood;
+  int blockY_cood;
+  int blockZ_cood;
 
   for (int iz=1; iz<numberOfCellsPerAxisZ+1; iz++) {
     for (int iy=1; iy<numberOfCellsPerAxisY+1; iy++) {
       for (int ix=1; ix<numberOfCellsPerAxisX+1; ix++) {
         // iterate through every cell (they are padded)
-        if (cellIsInside[ getCellIndex(ix, iy, iz) ]){
+        if (!cellIsInside[ getCellIndex(ix, iy, iz) ]){
           // if the cell is in the object
-          objectInBlock[getBlockIndexFromCellCoordinates(ix,iy,iz)] = true;
+          blockX_cood = (ix-1)/BLOCKDIMENSION;
+          blockY_cood = (iy-1)/BLOCKDIMENSION;
+          blockZ_cood = (iz-1)/BLOCKDIMENSION;
+
+          objectInBlock[getBlockIndexFromBlockCoordinates(blockX_cood,blockY_cood,blockZ_cood)] = true;
           // get the corresponding block
           // change the blocks index to true in the objectInBlock array
         }
       }
     }
   }
-/*
+
   for (int i = 0; i < numberOfBlocks; ++i){
     printf("%d\n", objectInBlock[i]);
   }
-*/
+
   validateThatEntriesAreBounded("setupScenario()");
 }
 
