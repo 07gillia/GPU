@@ -68,7 +68,7 @@ const double PPESolverThreshold                  = 1e-6;
 /**
  * Switch on to have a couple of security checks
  */
-#define CheckVariableValues
+//#define CheckVariableValues
 #define BLOCKDIMENSION 4
 
 
