@@ -1,0 +1,11 @@
+step one:
+
+needs to be done.
+
+step two:
+
+set up blocks, need to know number of blocks in each direction need to know total number of blocks iterate through every block in each block iterate through all cells in that block if any of these exist as part of the object then they cannot be vectorised if there is no object cell in the block then it can be vectorised, this is stored in a 'truth table' in computeP we iterate through every block and if it can be vectorised it is and if the block cannot be vectorised then it is treated the same as step ones code
+
+step three:
+
+needs to be done.
