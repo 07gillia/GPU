@@ -6,6 +6,7 @@
 #include <fstream>
 #include <cmath>
 
+
 /**
  * Number of cell we have per axis
  */
@@ -47,6 +48,7 @@ double* rhs;
  * A marker that is required for the Scientific Computing module.
  */
 double* ink;
+
 
 /**
  * Is cell inside domain
@@ -1150,6 +1152,10 @@ int main (int argc, char *argv[]) {
   ReynoldsNumber           = atof(argv[3]);
 
   std::cout << "Re=" << ReynoldsNumber << std::endl;
+
+  if (numberOfCellsPerAxisY % BLOCKDIMENSION != 0){
+    printf("PANIC PANIC PANIC\n");
+  }
 
   std::cout << "create " << numberOfCellsPerAxisX << "x" << numberOfCellsPerAxisY << "x" << numberOfCellsPerAxisZ << " grid" << std::endl;
   setupScenario();
