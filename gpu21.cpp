@@ -590,7 +590,7 @@ int computeP() {
 
             for (int xCell=0; xCell<BLOCKDIMENSION; xCell++) {
               for (int yCell=0; yCell<BLOCKDIMENSION; yCell++) {
-                //#pragma simd
+                #pragma simd // this is apparently doing a thing
                 for (int zCell=0; zCell<BLOCKDIMENSION; zCell++) {
                   // iterate through each cell in the block
 
@@ -603,7 +603,9 @@ int computeP() {
                   printf("%i : %i : %i\n", correctedX,correctedY,correctedZ);
                   printf("---\n");
                   */
-                  double residual = rhs[ getCellIndex(correctedX,correctedY,correctedZ) ] +
+                  double residual = 0;
+                  #pragma forceinline
+                  residual = rhs[ getCellIndex(correctedX,correctedY,correctedZ) ] +
                     1.0/getH()/getH()*
                     (
                       - 1.0 * p[ getCellIndex(correctedX-1,correctedY,correctedZ) ]
@@ -615,6 +617,7 @@ int computeP() {
                       + 6.0 * p[ getCellIndex(correctedX,correctedY,correctedZ) ]
                     );
                   globalResidual              += residual * residual;
+                  #pragma forceinline
                   p[ getCellIndex(correctedX,correctedY,correctedZ) ] += -omega * residual / 6.0 * getH() * getH();
                 }
               }
