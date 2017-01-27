@@ -41,7 +41,11 @@ bool* objectInBlock;
 
 /**
  * THIS IS STEP THREE
+ * 
  */
+int numberOfCellsPerAxisXHalo;
+int numberOfCellsPerAxisYHalo;
+int numberOfCellsPerAxisZHalo;
 
 /**
  * Pressure in the cell
@@ -156,6 +160,54 @@ int getFaceIndexZ(int ix, int iy, int iz) {
   assertion(iz<numberOfCellsPerAxisZ+3,__LINE__);
   return ix+iy*(numberOfCellsPerAxisX+2)+iz*(numberOfCellsPerAxisX+2)*(numberOfCellsPerAxisY+2);
 }
+
+
+
+/**
+ * get the cell from the halo array using its coordinates
+ */
+int getCellIndexFromHalo(int ix, int iy, int iz){
+  assertion(ix>=0,__LINE__);
+  assertion(ix<numberOfCellsPerAxisX+2 + 2*((ix-2)/BLOCKDIMENSION),__LINE__);
+  assertion(iy>=0,__LINE__);
+  assertion(iy<numberOfCellsPerAxisY+2 + 2*((iy-2)/BLOCKDIMENSION),__LINE__);
+  assertion(iz>=0,__LINE__);
+  assertion(iz<numberOfCellsPerAxisZ+2 + 2*((iz-2)/BLOCKDIMENSION),__LINE__);
+
+  return ix+iy*(numberOfCellsPerAxisX+2 + 2*((ix-2)/BLOCKDIMENSION))+iz*(numberOfCellsPerAxisX+2 + 2*((ix-2)/BLOCKDIMENSION))*(numberOfCellsPerAxisY+2 + 2*((iy-2)/BLOCKDIMENSION));
+}
+
+/**
+ * Convert from halo to non halo
+ */
+int getCellIndexFromHaloToNon(int ix, int iy, int iz){
+  assertion(ix>=0,__LINE__);
+  assertion(ix<numberOfCellsPerAxisX+2 + 2*((ix-2)/BLOCKDIMENSION),__LINE__);
+  assertion(iy>=0,__LINE__);
+  assertion(iy<numberOfCellsPerAxisY+2 + 2*((iy-2)/BLOCKDIMENSION),__LINE__);
+  assertion(iz>=0,__LINE__);
+  assertion(iz<numberOfCellsPerAxisZ+2 + 2*((iz-2)/BLOCKDIMENSION),__LINE__);
+
+  return getCellIndex((ix - (1 + (2 * (ix-2/BLOCKDIMENSION)))), (iy - (1 + (2 * (iy-2/BLOCKDIMENSION)))), (iz - (1 + (2 * (iz-2/BLOCKDIMENSION)))));
+  // this will call the standard getCellIndex on the supposed 'coordinates' of the current index
+}
+
+/**
+ * Convert from non halo to halo
+ * use outside of compute P for all loops that are indexed incorrectly
+ */
+int getCellIndexFromNonToHalo(int ix, int iy, int iz){
+  assertion(ix>=0,__LINE__);
+  assertion(ix<numberOfCellsPerAxisX+2,__LINE__);
+  assertion(iy>=0,__LINE__);
+  assertion(iy<numberOfCellsPerAxisY+2,__LINE__);
+  assertion(iz>=0,__LINE__);
+  assertion(iz<numberOfCellsPerAxisZ+2,__LINE__);
+
+  return getCellIndexFromHalo(); // need to finish
+}
+
+
 
 /**
  * We use always numberOfCellsPerAxisX=numberOfCellsPerAxisY and we make Z 5
@@ -726,7 +778,7 @@ void setNewVelocities() {
  * part three of the assessment.
  */
 void setupScenario() {
-  const int numberOfCells = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
+  const int numberOfCells = (numberOfCellsPerAxisX+2+(blockCountX+1)) * (numberOfCellsPerAxisY+2+(blockIndexY+1)) * (numberOfCellsPerAxisZ+2+(blockIndexZ+1));
   const int numberOfFacesX = (numberOfCellsPerAxisX+3) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+2);
   const int numberOfFacesY = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+3) * (numberOfCellsPerAxisZ+2);
   const int numberOfFacesZ = (numberOfCellsPerAxisX+2) * (numberOfCellsPerAxisY+2) * (numberOfCellsPerAxisZ+3);
@@ -735,6 +787,7 @@ void setupScenario() {
   blockCountY = numberOfCellsPerAxisY/BLOCKDIMENSION;
   blockCountZ = numberOfCellsPerAxisZ/BLOCKDIMENSION;
   blockCountTotal = blockCountX * blockCountY * blockCountZ;
+  // this means that the halo array has an extra (block in that axis + 1) cells in that direction
 
   //printf("%i : %i : %i : %i\n", blockCountX, blockCountY, blockCountZ, blockCountTotal);
   // the number of blocks at this point is correct
