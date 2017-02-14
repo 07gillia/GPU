@@ -7,6 +7,7 @@
 
 module purge
 module load intel/xe_2015.2
+g++ -O3 gpu1.cpp -o -g3 gpu1.out
 echo "FUCK THIS"
 amplxe-cl -collect hotspots -app-working-dir /scratch/llll76/GPU -- /scratch/llll76/GPU/gpu.out 10 0 1600
 ./gpu.out 10 0 1600
