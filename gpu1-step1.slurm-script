@@ -5,5 +5,7 @@
 #SBATCH -t 2:00:00
 #SBATCH --exclusive
 
+module purge
 module load intel
-/gpfs/hamilton6/apps/intel/xe_2015/vtune_amplifier_xe_2015.2.0.393444/bin64/amplxe-cl -collect hotspots -app-working-dir /scratch/llll76/GPU -- /scratch/llll76/GPU/gpu.out 10 0 1600
+echo "FUCK THIS"
+amplxe-cl -collect hotspots -app-working-dir /scratch/llll76/GPU -- /scratch/llll76/GPU/gpu.out 10 0 1600
