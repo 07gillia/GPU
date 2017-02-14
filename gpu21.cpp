@@ -590,7 +590,7 @@ int computeP() {
 
             for (int xCell=0; xCell<BLOCKDIMENSION; xCell++) {
               for (int yCell=0; yCell<BLOCKDIMENSION; yCell++) {
-                #pragma simd // this is apparently doing a thing
+                #pragma simd 
                 for (int zCell=0; zCell<BLOCKDIMENSION; zCell++) {
                   // iterate through each cell in the block
 
