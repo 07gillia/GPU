@@ -6,6 +6,6 @@
 #SBATCH --exclusive
 
 module purge
-module load intel
+module load intel/xe_2015.2
 echo "FUCK THIS"
 amplxe-cl -collect hotspots -app-working-dir /scratch/llll76/GPU -- /scratch/llll76/GPU/gpu.out 10 0 1600
