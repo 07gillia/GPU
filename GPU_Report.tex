@@ -59,8 +59,27 @@
 \section{Step One}
 Report demonstrates a mastery of performance analysis tools (5). Bottleneck of codes are identified and characterised (5). Performance model is set up in the report and it is calibrated to the used machine and code (5). Some reasonable predictions are made how much can be improved by performance optimisation (5).
 \subsection{Results}
+\begin{figure}[h]
+\caption{}
+\includegraphics[width=\textwidth]{one.png}
+\end{figure}
+\begin{figure}[h]
+\caption{}
+\includegraphics[width=\textwidth]{two.png}
+\end{figure}
+
+- These results are taken from...
+- Talk about compiler optimisation variants
+- All IO is removed so as to remove superfluous stuff
+- Used hamilton to run so as to get pure results
+- would a different machine make a difference
+- model would probably be amdals
+- this program will be memory bound
+- differences that parameters make
 
 \subsection{Bottlenecks}
+
+The bottle neck, as shown above is the loop in the function 'computeP'. This takes up a very large amount of the CPU Time. Another computationally significant part of the code is the function 'setPressureBoundaryConditions', whilst this does not make up as much of the CPU time as 'computeP' it is still a significant percentage.
 
 \subsection{Performance Model}
 
@@ -72,9 +91,13 @@ Report demonstrates a mastery of performance analysis tools (5). Bottleneck of c
 Report gives a clear description what has been realised in the code (5). Vectorisation report results are summarised in report and discussed (5). Runs with various input data sets have been made (5). Results are presented with state-of-the-art techniques (proper figures, e.g.) (5).
 \subsection{Description}
 
-In step two we work to split the computational domain into smaller cubes and vectorise any parts that can be. This can be done through reducing the branching at a showstopping point in the code. We start by splitting the overall box we are working in into smaller cubes, the dimensions of these cubes is hard-coded at a single point in the code, this is easy to change. If the dimensions of the box is such that it cannot be made up of complete cubes then the code will halt. If the input variables are such that the box can be made up of a whole number of cubes then the code will move onto working out if a given cube can be vectorised, this would be the case if, out of all the cells in the given cube, none of them are part of the obstacle. If the given block contains no cells from the obstacle then it can be vectorised as in the standard realisation of the code the if statement is a check if the current cell is part of the obstacle. Thus the pre-processing for checking the status of the cells is required to allow the non-obstacle blocks to be vectorised and the blocks that do contain part of obstacle to be treated with the standard code given, using the if statement.
+In step two we work to split the computational domain into smaller cubes and vectorise any parts that can be.  A loop can be vectorised if it meets a certain criteria; it must be countable, meaning that the number of iterations must be known before we enter the loop, it must have only a single entry and a  single exit, it also must have no branching, ie no if statements. The other criteria is only inner loops, no function calls, and no internal dependencies. 
+
+The criteria that this code breaks is the fact that it's main loop in the 'computeP' function contains branching, if this was removed then this loop could be vectorised as it meets all other criteria. We start by splitting the overall box we are working in into smaller cubes, the dimensions of these cubes is hard-coded at a single point in the code, this is easy to change. If the dimensions of the box is such that it cannot be made up of complete cubes then the code will halt. If the input variables are such that the box can be made up of a whole number of cubes then the code will move onto working out if a given cube can be vectorised, this would be the case if, out of all the cells in the given cube, none of them are part of the obstacle. If the given block contains no cells from the obstacle then it can be vectorised as in the standard realisation of the code the if statement is a check if the current cell is part of the obstacle. Thus the pre-processing for checking the status of the cells is required to allow the non-obstacle blocks to be vectorised and the blocks that do contain part of obstacle to be treated with the standard code given, using the if statement.
 
 The stages of the vectorisation are as follows, pre-processing takes place, this will check all cells in each block and set a flag as to what is contained within the block, obstacle or not. This will then be used to choose which set of for loops should be used, the vectorised or non-vectorised. The vectorisation is done using the standard intel SIMD pragma.
+
+The pragma SIMD alters the order of cell propagation, the order is now block by block rather than cell by cell the overall effect is negligible.
 
 \subsection{Vectorisation Reports}
 
@@ -91,9 +114,7 @@ LOOP END
 
 \end{lstlisting}
 
-The vectorised version of the code will not show the same as the code will have been vectorised via the intel pragmas. This will allow vectorised loads and thus faster code.
-
-TALK ABOUT THE OTHER FOR LOOP THAT WASN"T VECTORISED
+There are two loops that are present in step two, one that is vectorised and allowed for blocks that do not contain any parts of the obstacle to avoid the if statement in the standard loop that is unvectorised. 
 
 \begin{lstlisting}
 
@@ -102,6 +123,8 @@ TALK ABOUT THE OTHER FOR LOOP THAT WASN"T VECTORISED
  LOOP END
 
 \end{lstlisting}
+
+This is the vectorised loops vec-report, the other loop is almost identical to the loop in step one.
 
 \subsection{Results}
 

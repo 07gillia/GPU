@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.12.6)  14 FEB 2017 15:10
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.12.6)  15 FEB 2017 13:37
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -827,13 +827,28 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 
 LaTeX Warning: No \author given.
 
+<one.png, id=56, 841.1425pt x 82.3075pt>
+File: one.png Graphic file (type png)
+ <use one.png>
+Package pdftex.def Info: one.png used on input line 64.
+(pdftex.def)             Requested size: 489.10294pt x 47.86018pt.
 
-Overfull \hbox (8.11868pt too wide) in paragraph at lines 86--87
+<two.png, id=58, 702.625pt x 105.39375pt>
+File: two.png Graphic file (type png)
+ <use two.png>
+Package pdftex.def Info: two.png used on input line 68.
+(pdftex.def)             Requested size: 489.10294pt x 73.36824pt.
+ [1
+
+
+{/usr/local/texlive/2016/texmf-var/fonts/map/pdftex/updmap/pdftex.map} <./one.p
+ng> <./two.png>]
+Overfull \hbox (8.11868pt too wide) in paragraph at lines 109--110
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
-LaTeX Font Info:    Try loading font information for TS1+futs on input line 88.
-
+LaTeX Font Info:    Try loading font information for TS1+futs on input line 111
+.
 (/usr/local/texlive/2016/texmf-dist/tex/latex/fourier/ts1futs.fd
 File: ts1futs.fd 2004/03/26 Fontinst v1.926 font definitions for TS1/futs.
 )
@@ -842,39 +857,35 @@ Package microtype Info: Loading generic settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
-Overfull \hbox (25.46362pt too wide) in paragraph at lines 88--89
+Overfull \hbox (25.46362pt too wide) in paragraph at lines 111--112
 [][][][][][][][][][][][][][][][][][][] 
  []
 
-[1
-
-
-{/usr/local/texlive/2016/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 132.
-
 [2]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 132.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 155.
+ [3]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 155.
  (./GPU_Report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 132.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 132.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 155.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 155.
 Package rerunfilecheck Info: File `GPU_Report.out' has not changed.
 (rerunfilecheck)             Checksum: A920AA768BD1CE56DA4D04C5B84CA69A;739.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 132.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 155.
  ) 
 Here is how much of TeX's memory you used:
- 12640 strings out of 493014
- 199592 string characters out of 6133351
- 409123 words of memory out of 5000000
- 15842 multiletter control sequences out of 15000+600000
- 75867 words of font info for 143 fonts, out of 8000000 for 9000
+ 12667 strings out of 493014
+ 199865 string characters out of 6133351
+ 412123 words of memory out of 5000000
+ 15855 multiletter control sequences out of 15000+600000
+ 76407 words of font info for 149 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  41i,10n,51p,8513b,1101s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2016/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
 exlive/2016/texmf-dist/fonts/type1/adobe/utopia/putr8a.pfb>
-Output written on GPU_Report.pdf (2 pages, 29330 bytes).
+Output written on GPU_Report.pdf (3 pages, 132642 bytes).
 PDF statistics:
- 94 PDF objects out of 1000 (max. 8388607)
- 88 compressed objects within 1 object stream
- 30 named destinations out of 1000 (max. 500000)
- 36457 words of extra memory for PDF output out of 42996 (max. 10000000)
+ 106 PDF objects out of 1000 (max. 8388607)
+ 95 compressed objects within 1 object stream
+ 33 named destinations out of 1000 (max. 500000)
+ 36467 words of extra memory for PDF output out of 42996 (max. 10000000)
 
