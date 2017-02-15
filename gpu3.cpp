@@ -168,6 +168,7 @@ int getFaceIndexZ(int ix, int iy, int iz) {
  */
 int getCellIndexFromHalo(int ix, int iy, int iz){
   // this will take in a coordinate and will return the index of the cell in the halos array
+  // range 1 to len + 1
   assertion(ix>=0,__LINE__);
   assertion(ix<numberOfCellsPerAxisX+2 + 2*((ix)/BLOCKDIMENSION),__LINE__);
   assertion(iy>=0,__LINE__);
@@ -182,12 +183,14 @@ int getCellIndexFromHalo(int ix, int iy, int iz){
  * Convert from halo to non halo
  */
 int getCellIndexFromHaloToNon(int ix, int iy, int iz){
+  // given the index from the non halo array this will return the cell index from the halo array
+  // range 0 to len
   assertion(ix>=0,__LINE__);
-  assertion(ix<numberOfCellsPerAxisX+2 + 2*((ix-2)/BLOCKDIMENSION),__LINE__);
+  assertion(ix<numberOfCellsPerAxisX+2 + 2*((ix+2)/BLOCKDIMENSION),__LINE__);
   assertion(iy>=0,__LINE__);
-  assertion(iy<numberOfCellsPerAxisY+2 + 2*((iy-2)/BLOCKDIMENSION),__LINE__);
+  assertion(iy<numberOfCellsPerAxisY+2 + 2*((iy+2)/BLOCKDIMENSION),__LINE__);
   assertion(iz>=0,__LINE__);
-  assertion(iz<numberOfCellsPerAxisZ+2 + 2*((iz-2)/BLOCKDIMENSION),__LINE__);
+  assertion(iz<numberOfCellsPerAxisZ+2 + 2*((iz+2)/BLOCKDIMENSION),__LINE__);
 
   return getCellIndex((ix - (1 + (2 * (ix-2/BLOCKDIMENSION)))), (iy - (1 + (2 * (iy-2/BLOCKDIMENSION)))), (iz - (1 + (2 * (iz-2/BLOCKDIMENSION)))));
   // this will call the standard getCellIndex on the supposed 'coordinates' of the current index
