@@ -14,7 +14,7 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{wrapfig}
-\usepackage[margin=0.75in]{geometry}
+\usepackage[margin=0.5in]{geometry}
 \usepackage{amsmath}
 
 %%% Custom sectioning
@@ -60,12 +60,12 @@
 \section{Step One}
 \subsection{Results}
 \begin{figure}[h]
-\caption{}
-\includegraphics[width=\textwidth]{one.png}
+\centering
+\includegraphics[width=0.75\textwidth]{one.png}
 \end{figure}
 \begin{figure}[h]
-\caption{}
-\includegraphics[width=\textwidth]{two.png}
+\centering
+\includegraphics[width=0.75\textwidth]{two.png}
 \end{figure}
 
 This run time analysis is taken from Vtune, the analysis tools used are General Exploration, Advanced Hotspots, and HPC Performance Characterisation. It was used on a slightly altered step one, all IO has been turned off as to give an accurate representation of the computational time of the program and not add the time taken for IO. This was also run on Hamilton so the processes do not share CPU cycles or RAM with any other processes. If this was run on another system then it may have to share resources. Different compiler optimisations have been tested on this as well, -O1, -O2, and -O3 are different compiler optimisations with different severities, -O3 being the most severe and the one that was found to be the fastest in testing.
@@ -121,7 +121,12 @@ This is the vectorised loops vec-report, the other loop is almost identical to t
 
 \subsection{Results}
 
-TO BE DONE AT HOME
+These results are step one and two, they have the same command line parameters outside of grid size which is increased stepwise. They also run over the same t value.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{StepTwo.png}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -132,9 +137,10 @@ The arrays that store all values for the cells are padded in such a way that the
 
 \subsection{Results}
 
-test for speed and plot using state if the art graphs
-
-Testing has been done over a range of command line parameters
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{StepThree.png}
+\end{figure}
 
 \subsection{Limitations}
 

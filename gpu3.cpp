@@ -14,7 +14,7 @@ Run:
 ./gpu3.out 8 0 1600
 
 Pre-Processing:
-
+setenv OMP_NUM_THREADS 16
 
 */
 #include <stdlib.h>
