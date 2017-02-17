@@ -1,3 +1,10 @@
+/*
+
+icpc -O3 -g -qopenmp gpu3.cpp -o gpu3.out
+
+./gpu3.out 8 0 1600
+
+*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>

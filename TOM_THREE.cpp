@@ -758,10 +758,10 @@ int computeP() {
     iterations++;
   }
 
-  //std::cout << "iterations n=" << iterations
-            // << ", |res(n)|_2=" << globalResidual
-            // << ", |res(n-1)|_2=" << previousGlobalResidual
-            // << ", |res(n-1)|_2-|res(n)|_2=" << (previousGlobalResidual-globalResidual);
+  std::cout << "iterations n=" << iterations
+             << ", |res(n)|_2=" << globalResidual
+             << ", |res(n-1)|_2=" << previousGlobalResidual
+             << ", |res(n-1)|_2-|res(n)|_2=" << (previousGlobalResidual-globalResidual);
 
   return iterations;
 }
@@ -1228,16 +1228,16 @@ void setVelocityBoundaryConditions(double time) {
 
 int main (int argc, char *argv[]) {
   if (argc!=4) {
-      //std::cout << "Usage: executable number-of-elements-per-axis time-steps-between-plots reynolds-number" << std::endl;
-      //std::cout << "    number-of-elements-per-axis  Resolution. Must be divisible by 4. Try to increase as much as possible later." << std::endl;
-      //std::cout << "    time-between-plots           Determines how many files are written. Set to 0 to switch off plotting (for performance studies)." << std::endl;
-      //std::cout << "    reynolds-number              Use something in-between 1 and 1000. Determines viscosity of fluid." << std::endl;
+      std::cout << "Usage: executable number-of-elements-per-axis time-steps-between-plots reynolds-number" << std::endl;
+      std::cout << "    number-of-elements-per-axis  Resolution. Must be divisible by 4. Try to increase as much as possible later." << std::endl;
+      std::cout << "    time-between-plots           Determines how many files are written. Set to 0 to switch off plotting (for performance studies)." << std::endl;
+      std::cout << "    reynolds-number              Use something in-between 1 and 1000. Determines viscosity of fluid." << std::endl;
       return 1;
   }
 
   if (atoi(argv[1])%4 != 0)
   {
-    //std::cout << "Number of elements per axis must be divisible by 4";
+    std::cout << "Number of elements per axis must be divisible by 4";
     return 1;
   }
 
@@ -1249,7 +1249,7 @@ int main (int argc, char *argv[]) {
 
   //std::cout << "Re=" << ReynoldsNumber << std::endl;
 
-  //std::cout << "create " << numberOfCellsPerAxisX << "x" << numberOfCellsPerAxisY << "x" << numberOfCellsPerAxisZ << " grid" << std::endl;
+  std::cout << "create " << numberOfCellsPerAxisX << "x" << numberOfCellsPerAxisY << "x" << numberOfCellsPerAxisZ << " grid" << std::endl;
   setupScenario();
 
   //   dt <= C Re dx^2
