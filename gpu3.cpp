@@ -1,8 +1,20 @@
 /*
 
+=======================================================================
+This example follows the book from Griebel et al on Computational Fluid
+Dynamics. It realises a test setup from TUM's CFD lab.
+
+(C) 2016 Tobias Weinzierl
+=======================================================================
+
+Compile:
 icpc -O3 -g -qopenmp gpu3.cpp -o gpu3.out
 
+Run:
 ./gpu3.out 8 0 1600
+
+Pre-Processing:
+
 
 */
 #include <stdlib.h>
@@ -288,7 +300,7 @@ void validateThatEntriesAreBounded(const std::string&  callingRoutine) {
   for (int ix=0; ix<numberOfCellsPerAxisX+2; ix++)
   for (int iy=0; iy<numberOfCellsPerAxisY+2; iy++)
   for (int iz=0; iz<numberOfCellsPerAxisZ+2; iz++) {
-    if ( std::abs(p[ getCellIndex(ix,iy,iz)])>1e10 ) {
+    if ( std::abs(p[ getPaddedCellIndex(ix,iy,iz)])>1e10 ) {
       std::cerr << "error in routine " + callingRoutine + " in p[" << ix << "," << iy << "," << iz << "]" << std::endl;
       exit(-1);
     }
@@ -420,7 +432,7 @@ void plotVTKFile() {
   for (int iz=1; iz<numberOfCellsPerAxisZ+1; iz++) {
     for (int iy=1; iy<numberOfCellsPerAxisY+1; iy++) {
       for (int ix=1; ix<numberOfCellsPerAxisX+1; ix++) {
-        out << p[ getCellIndex(ix,iy,iz) ] << std::endl;
+        out << p[ getPaddedCellIndex(ix,iy,iz) ] << std::endl;
       }
     }
   }
@@ -431,7 +443,7 @@ void plotVTKFile() {
   for (int iz=1; iz<numberOfCellsPerAxisZ+1; iz++) {
     for (int iy=1; iy<numberOfCellsPerAxisY+1; iy++) {
       for (int ix=1; ix<numberOfCellsPerAxisX+1; ix++) {
-        out << cellIsInside[ getCellIndex(ix,iy,iz) ] << std::endl;
+        out << cellIsInside[ getPaddedCellIndex(ix,iy,iz) ] << std::endl;
       }
     }
   }
@@ -597,32 +609,32 @@ void setPressureBoundaryConditions() {
   for (iy=0; iy<numberOfCellsPerAxisY+2; iy++) {
     for (iz=0; iz<numberOfCellsPerAxisZ+2; iz++) {
       ix=0;
-      p[ getCellIndex(ix,iy,iz) ]   = p[ getCellIndex(ix+1,iy,iz) ];
+      p[ getPaddedCellIndex(ix,iy,iz) ]   = p[ getPaddedCellIndex(ix+1,iy,iz) ];
       ix=numberOfCellsPerAxisX+1;
-      p[ getCellIndex(ix,iy,iz) ]   = p[ getCellIndex(ix-1,iy,iz) ];
+      p[ getPaddedCellIndex(ix,iy,iz) ]   = p[ getPaddedCellIndex(ix-1,iy,iz) ];
     }
   }
   for (ix=0; ix<numberOfCellsPerAxisX+2; ix++) {
     for (iz=0; iz<numberOfCellsPerAxisZ+2; iz++) {
       iy=0;
-      p[ getCellIndex(ix,iy,iz) ]   = p[ getCellIndex(ix,iy+1,iz) ];
+      p[ getPaddedCellIndex(ix,iy,iz) ]   = p[ getPaddedCellIndex(ix,iy+1,iz) ];
       iy=numberOfCellsPerAxisY+1;
-      p[ getCellIndex(ix,iy,iz) ]   = p[ getCellIndex(ix,iy-1,iz) ];
+      p[ getPaddedCellIndex(ix,iy,iz) ]   = p[ getPaddedCellIndex(ix,iy-1,iz) ];
     }
   }
   for (ix=0; ix<numberOfCellsPerAxisX+2; ix++) {
     for (iy=0; iy<numberOfCellsPerAxisY+2; iy++) {
       iz=0;
-      p[ getCellIndex(ix,iy,iz) ]   = p[ getCellIndex(ix,iy,iz+1) ];
+      p[ getPaddedCellIndex(ix,iy,iz) ]   = p[ getPaddedCellIndex(ix,iy,iz+1) ];
       iz=numberOfCellsPerAxisZ+1;
-      p[ getCellIndex(ix,iy,iz) ]   = p[ getCellIndex(ix,iy,iz-1) ];
+      p[ getPaddedCellIndex(ix,iy,iz) ]   = p[ getPaddedCellIndex(ix,iy,iz-1) ];
     }
   }
 
   // Normalise pressure at rhs to zero
   for (iy=1; iy<numberOfCellsPerAxisY+2-1; iy++) {
     for (iz=1; iz<numberOfCellsPerAxisZ+2-1; iz++) {
-      p[ getCellIndex(numberOfCellsPerAxisX+1,iy,iz) ]   = 0.0;
+      p[ getPaddedCellIndex(numberOfCellsPerAxisX+1,iy,iz) ]   = 0.0;
     }
   }
 
@@ -632,22 +644,22 @@ void setPressureBoundaryConditions() {
       for (int ix=2; ix<numberOfCellsPerAxisX+1; ix++) {
         if (cellIsInside[getCellIndex(ix,iy,iz)]) {
           if ( !cellIsInside[getCellIndex(ix-1,iy,iz)] ) { // left neighbour
-            p[getCellIndex(ix-1,iy,iz)]     = p[getCellIndex(ix,iy,iz)];
+            p[getPaddedCellIndex(ix-1,iy,iz)]     = p[getPaddedCellIndex(ix,iy,iz)];
           }
           if ( !cellIsInside[getCellIndex(ix+1,iy,iz)] ) { // right neighbour
-            p[getCellIndex(ix+1,iy,iz)]     = p[getCellIndex(ix,iy,iz)];
+            p[getPaddedCellIndex(ix+1,iy,iz)]     = p[getPaddedCellIndex(ix,iy,iz)];
           }
           if ( !cellIsInside[getCellIndex(ix,iy-1,iz)] ) { // bottom neighbour
-            p[getCellIndex(ix,iy-1,iz)]     = p[getCellIndex(ix,iy,iz)];
+            p[getPaddedCellIndex(ix,iy-1,iz)]     = p[getPaddedCellIndex(ix,iy,iz)];
           }
           if ( !cellIsInside[getCellIndex(ix,iy+1,iz)] ) { // right neighbour
-            p[getCellIndex(ix,iy+1,iz)]     = p[getCellIndex(ix,iy,iz)];
+            p[getPaddedCellIndex(ix,iy+1,iz)]     = p[getPaddedCellIndex(ix,iy,iz)];
           }
           if ( !cellIsInside[getCellIndex(ix,iy,iz-1)] ) { // front neighbour
-            p[getCellIndex(ix,iy,iz-1)]     = p[getCellIndex(ix,iy,iz)];
+            p[getPaddedCellIndex(ix,iy,iz-1)]     = p[getPaddedCellIndex(ix,iy,iz)];
           }
           if ( !cellIsInside[getCellIndex(ix,iy,iz+1)] ) { // right neighbour
-            p[getCellIndex(ix,iy,iz+1)]     = p[getCellIndex(ix,iy,iz)];
+            p[getPaddedCellIndex(ix,iy,iz+1)]     = p[getPaddedCellIndex(ix,iy,iz)];
           }
         }
       }
@@ -728,17 +740,17 @@ int computeP() {
                   residual = rhs[ getCellIndex(correctedX,correctedY,correctedZ) ] +
                     1.0/getH()/getH()*
                     (
-                      - 1.0 * p[ getCellIndex(correctedX-1,correctedY,correctedZ) ]
-                      - 1.0 * p[ getCellIndex(correctedX+1,correctedY,correctedZ) ]
-                      - 1.0 * p[ getCellIndex(correctedX,correctedY-1,correctedZ) ]
-                      - 1.0 * p[ getCellIndex(correctedX,correctedY+1,correctedZ) ]
-                      - 1.0 * p[ getCellIndex(correctedX,correctedY,correctedZ-1) ]
-                      - 1.0 * p[ getCellIndex(correctedX,correctedY,correctedZ+1) ]
-                      + 6.0 * p[ getCellIndex(correctedX,correctedY,correctedZ) ]
+                      - 1.0 * p[ fromHaloGetPadded(correctedX-1,correctedY,correctedZ) ]
+                      - 1.0 * p[ fromHaloGetPadded(correctedX+1,correctedY,correctedZ) ]
+                      - 1.0 * p[ fromHaloGetPadded(correctedX,correctedY-1,correctedZ) ]
+                      - 1.0 * p[ fromHaloGetPadded(correctedX,correctedY+1,correctedZ) ]
+                      - 1.0 * p[ fromHaloGetPadded(correctedX,correctedY,correctedZ-1) ]
+                      - 1.0 * p[ fromHaloGetPadded(correctedX,correctedY,correctedZ+1) ]
+                      + 6.0 * p[ fromHaloGetPadded(correctedX,correctedY,correctedZ) ]
                     );
                   globalResidual              += residual * residual;
                   #pragma forceinline
-                  p[ getCellIndex(correctedX,correctedY,correctedZ) ] += -omega * residual / 6.0 * getH() * getH();
+                  p[ fromHaloGetPadded(correctedX,correctedY,correctedZ) ] += -omega * residual / 6.0 * getH() * getH();
                 }
               }
             }
@@ -753,9 +765,9 @@ int computeP() {
                 for (int zCell=0; zCell<BLOCKDIMENSION; zCell++) {
                   // iterate through each cell in the block
 
-                  correctedX = (blockIndexX * BLOCKDIMENSION) + xCell + 1;
-                  correctedY = (blockIndexY * BLOCKDIMENSION) + yCell + 1;
-                  correctedZ = (blockIndexZ * BLOCKDIMENSION) + zCell + 1;
+                  correctedX = (blockIndexX * BLOCKDIMENSION) + xCell + blockIndexX + 2;
+                  correctedY = (blockIndexY * BLOCKDIMENSION) + yCell + blockIndexY + 2;
+                  correctedZ = (blockIndexZ * BLOCKDIMENSION) + zCell + blockIndexZ + 2;
                   // the actual index values of the cells
                   /*
                   printf("---\n");
@@ -766,16 +778,16 @@ int computeP() {
                     double residual = rhs[ getCellIndex(correctedX,correctedY,correctedZ) ] +
                       1.0/getH()/getH()*
                       (
-                        - 1.0 * p[ getCellIndex(correctedX-1,correctedY,correctedZ) ]
-                        - 1.0 * p[ getCellIndex(correctedX+1,correctedY,correctedZ) ]
-                        - 1.0 * p[ getCellIndex(correctedX,correctedY-1,correctedZ) ]
-                        - 1.0 * p[ getCellIndex(correctedX,correctedY+1,correctedZ) ]
-                        - 1.0 * p[ getCellIndex(correctedX,correctedY,correctedZ-1) ]
-                        - 1.0 * p[ getCellIndex(correctedX,correctedY,correctedZ+1) ]
-                        + 6.0 * p[ getCellIndex(correctedX,correctedY,correctedZ) ]
+                        - 1.0 * p[ fromHaloGetPadded(correctedX-1,correctedY,correctedZ) ]
+                        - 1.0 * p[ fromHaloGetPadded(correctedX+1,correctedY,correctedZ) ]
+                        - 1.0 * p[ fromHaloGetPadded(correctedX,correctedY-1,correctedZ) ]
+                        - 1.0 * p[ fromHaloGetPadded(correctedX,correctedY+1,correctedZ) ]
+                        - 1.0 * p[ fromHaloGetPadded(correctedX,correctedY,correctedZ-1) ]
+                        - 1.0 * p[ fromHaloGetPadded(correctedX,correctedY,correctedZ+1) ]
+                        + 6.0 * p[ fromHaloGetPadded(correctedX,correctedY,correctedZ) ]
                       );
                     globalResidual              += residual * residual;
-                    p[ getCellIndex(correctedX,correctedY,correctedZ) ] += -omega * residual / 6.0 * getH() * getH();
+                    p[ fromHaloGetPadded(correctedX,correctedY,correctedZ) ] += -omega * residual / 6.0 * getH() * getH();
                   }
                 }
               }
@@ -813,7 +825,7 @@ void setNewVelocities() {
   for (int iz=1; iz<numberOfCellsPerAxisZ+2-1; iz++) {
     for (int iy=1; iy<numberOfCellsPerAxisY+2-1; iy++) {
       for (int ix=2; ix<numberOfCellsPerAxisX+3-2; ix++) {
-        ux[ getFaceIndexX(ix,iy,iz) ] = Fx[ getFaceIndexX(ix,iy,iz) ] - timeStepSize/getH() * ( p[getCellIndex(ix,iy,iz)] - p[getCellIndex(ix-1,iy,iz)]);
+        ux[ getFaceIndexX(ix,iy,iz) ] = Fx[ getFaceIndexX(ix,iy,iz) ] - timeStepSize/getH() * ( p[getPaddedCellIndex(ix,iy,iz)] - p[getPaddedCellIndex(ix-1,iy,iz)]);
       }
     }
   }
@@ -821,7 +833,7 @@ void setNewVelocities() {
   for (int iz=1; iz<numberOfCellsPerAxisZ+2-1; iz++) {
     for (int iy=2; iy<numberOfCellsPerAxisY+3-2; iy++) {
       for (int ix=1; ix<numberOfCellsPerAxisX+2-1; ix++) {
-        uy[ getFaceIndexY(ix,iy,iz) ] = Fy[ getFaceIndexY(ix,iy,iz) ] - timeStepSize/getH() * ( p[getCellIndex(ix,iy,iz)] - p[getCellIndex(ix,iy-1,iz)]);
+        uy[ getFaceIndexY(ix,iy,iz) ] = Fy[ getFaceIndexY(ix,iy,iz) ] - timeStepSize/getH() * ( p[getPaddedCellIndex(ix,iy,iz)] - p[getPaddedCellIndex(ix,iy-1,iz)]);
       }
     }
   }
@@ -829,7 +841,7 @@ void setNewVelocities() {
   for (int iz=2; iz<numberOfCellsPerAxisZ+3-2; iz++) {
     for (int iy=1; iy<numberOfCellsPerAxisY+2-1; iy++) {
       for (int ix=1; ix<numberOfCellsPerAxisX+2-1; ix++) {
-        uz[ getFaceIndexZ(ix,iy,iz) ] = Fz[ getFaceIndexZ(ix,iy,iz) ] - timeStepSize/getH() * ( p[getCellIndex(ix,iy,iz)] - p[getCellIndex(ix,iy,iz-1)]);
+        uz[ getFaceIndexZ(ix,iy,iz) ] = Fz[ getFaceIndexZ(ix,iy,iz) ] - timeStepSize/getH() * ( p[getPaddedCellIndex(ix,iy,iz)] - p[getPaddedCellIndex(ix,iy,iz-1)]);
       }
     }
   }
